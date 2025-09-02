@@ -187,23 +187,24 @@ window.addEventListener('load', function() {
         }
 
         async function connectWallet() {
-            try {
-                await StacksConnect.showConnect({
-                    appDetails: {
-                        name: 'sBTC Payment Gateway',
-                        icon: window.location.origin + '/favicon.ico',
-                    },
-                    redirectTo: '/',
-                    onFinish: () => {
-                        window.location.reload();
-                    },
-                    userSession: userSession,
-                });
-            } catch (error) {
-                console.error('Wallet connection error:', error);
-                showStatus('Failed to connect wallet', 'error');
+    try {
+        // Check if wallet is available
+        if (window.StacksProvider) {
+            const response = await window.StacksProvider.request('connect');
+            if (response) {
+                updateWalletUI(response);
             }
+        } else if (window.btc) {
+            // Xverse wallet
+            const response = await window.btc.request('connect');
+            updateWalletUI(response);
+        } else {
+            showStatus('No Stacks wallet detected. Please install Xverse or Leather wallet.', 'error');
         }
+    } catch (error) {
+        showStatus('Wallet connection failed: ' + error.message, 'error');
+    }
+}
 
         async function processPayment() {
             const recipient = document.getElementById('recipient').value.trim();
