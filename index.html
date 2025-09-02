@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sBTC Payment Gateway - Live Testnet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@stacks/connect@20.0.1/dist/umd/index.js"></script>
+    <script src="https://unpkg.com/@stacks/transactions@6.5.4/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/@stacks/network@6.5.4/dist/index.umd.js"></script>
+<script>
+// Check if libraries loaded
+window.addEventListener('load', function() {
+    if (typeof StacksConnect === 'undefined') {
+        document.getElementById('status-messages').innerHTML = 
+            '<div class="p-3 border rounded-md bg-red-50 border-red-200 text-red-700">' +
+            '<p class="text-sm">Wallet libraries failed to load. Please refresh the page.</p></div>';
+    }
+});
+</script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-orange-50 to-gray-100 py-12">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <div class="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                Live Testnet Demo - Stacks Builders Competition
+            </div>
+            
+            <h1 class="text-5xl font-bold text-gray-900 mb-4">
+                sBTC Payment Gateway
+            </h1>
+            <p class="text-xl text-gray-600 mb-8">
+                <span class="text-orange-600 font-semibold">Stripe for sBTC</span> - Real Bitcoin payments on Stacks testnet
+            </p>
+        </div>
+        
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Live sBTC Payment</h2>
+                <p class="text-gray-600">Connect your Xverse/Leather wallet to test real sBTC transactions</p>
+                
+                <!-- Wallet Status -->
+                <div id="wallet-status" class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md hidden">
+                    <p class="text-sm text-gray-700">
+                        <strong>Connected:</strong> <span id="wallet-address">Not connected</span>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Recipient Address
+                    </label>
+                    <input
+                        id="recipient"
+                        type="text"
+                        value="ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono text-sm"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Amount (sBTC)
+                    </label>
+                    <input
+                        id="amount"
+                        type="number"
+                        step="0.00000001"
+                        min="0.00000001"
+                        value="0.001"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Memo (Optional)
+                    </label>
+                    <input
+                        id="memo"
+                        type="text"
+                        value="sBTC Payment Gateway Test"
+                        maxlength="34"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                </div>
+
+                <!-- Status Messages -->
+                <div id="status-messages" class="space-y-2"></div>
+
+                <!-- Action Button -->
+                <button 
+                    id="payment-button"
+                    onclick="handlePayment()"
+                    class="w-full bg-orange-500 text-white py-3 px-4 rounded-md hover:bg-orange-600 transition-colors font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                    Connect Wallet
+                </button>
+
+                <div class="text-center text-sm text-gray-500 mt-6">
+                    <p>Real testnet sBTC transactions • Secured by Bitcoin finality</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transaction History -->
+        <div id="transaction-history" class="max-w-md mx-auto mt-8 bg-white rounded-lg shadow-lg p-6 hidden">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Transaction Status</h3>
+            <div id="tx-list" class="space-y-3"></div>
+        </div>
+
+        <div class="max-w-2xl mx-auto mt-12 bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Setup Instructions</h3>
+            <div class="space-y-3 text-sm text-gray-700">
+                <div class="p-3 bg-blue-50 rounded">
+                    <strong>1. Install Wallet:</strong> Download <a href="https://www.xverse.app/" target="_blank" class="text-blue-600 underline">Xverse</a> or <a href="https://wallet.hiro.so/" target="_blank" class="text-blue-600 underline">Leather wallet</a>
+                </div>
+                <div class="p-3 bg-green-50 rounded">
+                    <strong>2. Get Test Tokens:</strong> Visit <a href="https://explorer.hiro.so/sandbox/faucet" target="_blank" class="text-green-600 underline">Stacks testnet faucet</a> for STX and sBTC
+                </div>
+                <div class="p-3 bg-orange-50 rounded">
+                    <strong>3. Test Payment:</strong> Connect wallet and send a small test amount
+                </div>
+                <div class="p-3 bg-purple-50 rounded">
+                    <strong>4. View Transaction:</strong> Check <a href="https://explorer.hiro.so/?chain=testnet" target="_blank" class="text-purple-600 underline">testnet explorer</a> for confirmation
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userSession = null;
+        let isConnected = false;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof StacksConnect !== 'undefined') {
+                console.log('Stacks Connect loaded successfully');
+                initializeWallet();
+            } else {
+                showStatus('Error loading Stacks Connect library', 'error');
+            }
+        });
+
+        function initializeWallet() {
+            try {
+                const appConfig = new StacksConnect.AppConfig(['store_write', 'publish_data']);
+                userSession = new StacksConnect.UserSession({ appConfig });
+
+                // Check if user is already signed in
+                if (userSession.isSignInPending()) {
+                    userSession.handlePendingSignIn().then((userData) => {
+                        updateWalletUI(userData);
+                    });
+                } else if (userSession.isUserSignedIn()) {
+                    updateWalletUI(userSession.loadUserData());
+                }
+            } catch (error) {
+                console.error('Wallet initialization error:', error);
+                showStatus('Wallet initialization failed', 'error');
+            }
+        }
+
+        function updateWalletUI(userData) {
+            isConnected = true;
+            const address = userData.profile?.stxAddress?.testnet || userData.profile?.stxAddress?.mainnet;
+            
+            if (address) {
+                document.getElementById('wallet-status').classList.remove('hidden');
+                document.getElementById('wallet-address').textContent = 
+                    address.slice(0, 8) + '...' + address.slice(-8);
+                document.getElementById('payment-button').textContent = 'Send sBTC Payment';
+                document.getElementById('wallet-status').classList.add('bg-green-50', 'border-green-200');
+                
+                showStatus('Wallet connected successfully!', 'success');
+            }
+        }
+
+        async function handlePayment() {
+            if (!isConnected) {
+                await connectWallet();
+                return;
+            }
+
+            await processPayment();
+        }
+
+        async function connectWallet() {
+            try {
+                await StacksConnect.showConnect({
+                    appDetails: {
+                        name: 'sBTC Payment Gateway',
+                        icon: window.location.origin + '/favicon.ico',
+                    },
+                    redirectTo: '/',
+                    onFinish: () => {
+                        window.location.reload();
+                    },
+                    userSession: userSession,
+                });
+            } catch (error) {
+                console.error('Wallet connection error:', error);
+                showStatus('Failed to connect wallet', 'error');
+            }
+        }
+
+        async function processPayment() {
+            const recipient = document.getElementById('recipient').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const memo = document.getElementById('memo').value.trim();
+
+            // Validation
+            if (!recipient || !isValidStacksAddress(recipient)) {
+                showStatus('Please enter a valid Stacks address', 'error');
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                showStatus('Please enter a valid amount', 'error');
+                return;
+            }
+
+            // Convert to microSTX (1 STX = 1,000,000 microSTX)
+            const amountMicroSTX = Math.floor(amount * 1000000);
+
+            showStatus('Preparing transaction...', 'info');
+            
+            try {
+                const network = new StacksNetwork.StacksTestnet();
+                
+                // For this demo, we'll use STX transfer since sBTC contract interaction is more complex
+                // In production, this would be an sBTC contract call
+                const txOptions = {
+                    contractAddress: 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE',
+                    contractName: 'sbtc-token',
+                    functionName: 'transfer',
+                    functionArgs: [
+                        StacksTransactions.uintCV(amountMicroSTX),
+                        StacksTransactions.standardPrincipalCV(userSession.loadUserData().profile.stxAddress.testnet),
+                        StacksTransactions.standardPrincipalCV(recipient),
+                        memo ? StacksTransactions.someCV(StacksTransactions.bufferCV(Buffer.from(memo))) : StacksTransactions.noneCV()
+                    ],
+                    network: network,
+                    postConditions: [],
+                };
+
+                await StacksConnect.openContractCall(txOptions);
+                
+                showStatus('Transaction submitted! Check your wallet for confirmation.', 'success');
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                showStatus('Payment failed: ' + error.message, 'error');
+            }
+        }
+
+        function isValidStacksAddress(address) {
+            return /^S[TP][0-9A-HJ-NP-Z]{39}$/.test(address);
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status-messages');
+            const statusElement = document.createElement('div');
+            
+            const typeClasses = {
+                success: 'bg-green-50 border-green-200 text-green-700',
+                error: 'bg-red-50 border-red-200 text-red-700',
+                info: 'bg-blue-50 border-blue-200 text-blue-700'
+            };
+            
+            statusElement.className = `p-3 border rounded-md ${typeClasses[type] || typeClasses.info}`;
+            statusElement.innerHTML = `<p class="text-sm">${message}</p>`;
+            
+            statusDiv.innerHTML = '';
+            statusDiv.appendChild(statusElement);
+            
+            // Auto-remove success/info messages after 5 seconds
+            if (type !== 'error') {
+                setTimeout(() => {
+                    if (statusElement.parentNode) {
+                        statusElement.remove();
+                    }
+                }, 5000);
+            }
+        }
+
+        // Add transaction to history (for demo purposes)
+        function addTransactionToHistory(txId, amount, recipient) {
+            const historyDiv = document.getElementById('transaction-history');
+            const txList = document.getElementById('tx-list');
+            
+            const txElement = document.createElement('div');
+            txElement.className = 'p-3 bg-gray-50 rounded border-l-4 border-orange-500';
+            txElement.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="text-sm font-medium">${amount} sBTC</div>
+                        <div class="text-xs text-gray-500">To: ${recipient.slice(0, 12)}...</div>
+                    </div>
+                    <div class="text-xs text-gray-500">Pending</div>
+                </div>
+                <div class="text-xs text-gray-400 mt-1">TX: ${txId}</div>
+            `;
+            
+            txList.appendChild(txElement);
+            historyDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
