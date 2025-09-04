@@ -5,19 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sBTC Payment Gateway - Live Testnet</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@stacks/connect@20.0.1/dist/umd/index.js"></script>
-    <script src="https://unpkg.com/@stacks/transactions@6.5.4/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/@stacks/network@6.5.4/dist/index.umd.js"></script>
-<script>
-// Check if libraries loaded
-window.addEventListener('load', function() {
-    if (typeof StacksConnect === 'undefined') {
-        document.getElementById('status-messages').innerHTML = 
-            '<div class="p-3 border rounded-md bg-red-50 border-red-200 text-red-700">' +
-            '<p class="text-sm">Wallet libraries failed to load. Please refresh the page.</p></div>';
-    }
-});
-</script>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-orange-50 to-gray-100 py-12">
     <div class="container mx-auto px-4">
@@ -76,6 +63,16 @@ window.addEventListener('load', function() {
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Payment Type
+                    </label>
+                    <select id="payment-type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="sbtc">sBTC Transfer (SIP-010 Token)</option>
+                        <option value="stx">STX Transfer (Fallback)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
                         Memo (Optional)
                     </label>
                     <input
@@ -117,64 +114,84 @@ window.addEventListener('load', function() {
                     <strong>1. Install Wallet:</strong> Download <a href="https://www.xverse.app/" target="_blank" class="text-blue-600 underline">Xverse</a> or <a href="https://wallet.hiro.so/" target="_blank" class="text-blue-600 underline">Leather wallet</a>
                 </div>
                 <div class="p-3 bg-green-50 rounded">
-                    <strong>2. Get Test Tokens:</strong> Visit <a href="https://explorer.hiro.so/sandbox/faucet" target="_blank" class="text-green-600 underline">Stacks testnet faucet</a> for STX and sBTC
+                    <strong>2. Switch to Testnet:</strong> In your wallet settings, switch to testnet mode
+                </div>
+                <div class="p-3 bg-yellow-50 rounded">
+                    <strong>3. Get Test Tokens:</strong> Visit <a href="https://platform.hiro.so/faucet" target="_blank" class="text-yellow-600 underline">Hiro Platform Faucet</a> for STX and sBTC
                 </div>
                 <div class="p-3 bg-orange-50 rounded">
-                    <strong>3. Test Payment:</strong> Connect wallet and send a small test amount
+                    <strong>4. Test Payment:</strong> Connect wallet and send a small test amount
                 </div>
                 <div class="p-3 bg-purple-50 rounded">
-                    <strong>4. View Transaction:</strong> Check <a href="https://explorer.hiro.so/?chain=testnet" target="_blank" class="text-purple-600 underline">testnet explorer</a> for confirmation
+                    <strong>5. View Transaction:</strong> Check <a href="https://explorer.hiro.so/?chain=testnet" target="_blank" class="text-purple-600 underline">testnet explorer</a> for confirmation
                 </div>
             </div>
+        </div>
+        
+        <!-- Debug Info -->
+        <div id="debug-info" class="max-w-2xl mx-auto mt-8 bg-gray-100 rounded-lg p-4 text-sm hidden">
+            <h4 class="font-bold mb-2">Debug Information:</h4>
+            <div id="debug-content"></div>
         </div>
     </div>
 
     <script>
-        let userSession = null;
         let isConnected = false;
+        let connectedAddress = null;
+        let walletType = null;
+
+        // sBTC Contract Details - Using Hiro's testnet deployment
+        const SBTC_CONTRACT = {
+            address: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM', // Testnet contract deployer
+            name: 'sbtc-token' // Standard SIP-010 token contract name
+        };
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
-            if (typeof StacksConnect !== 'undefined') {
-                console.log('Stacks Connect loaded successfully');
-                initializeWallet();
-            } else {
-                showStatus('Error loading Stacks Connect library', 'error');
-            }
+            detectWallets();
+            showStatus('Ready to connect wallet. Make sure your wallet is in testnet mode.', 'info');
         });
 
-        function initializeWallet() {
-            try {
-                const appConfig = new StacksConnect.AppConfig(['store_write', 'publish_data']);
-                userSession = new StacksConnect.UserSession({ appConfig });
-
-                // Check if user is already signed in
-                if (userSession.isSignInPending()) {
-                    userSession.handlePendingSignIn().then((userData) => {
-                        updateWalletUI(userData);
-                    });
-                } else if (userSession.isUserSignedIn()) {
-                    updateWalletUI(userSession.loadUserData());
-                }
-            } catch (error) {
-                console.error('Wallet initialization error:', error);
-                showStatus('Wallet initialization failed', 'error');
+        function detectWallets() {
+            const debugInfo = [];
+            
+            if (window.btc) {
+                debugInfo.push('✅ Xverse wallet detected');
+            } else {
+                debugInfo.push('❌ Xverse wallet not found');
             }
+            
+            if (window.LeatherProvider) {
+                debugInfo.push('✅ Leather wallet detected');
+            } else {
+                debugInfo.push('❌ Leather wallet not found');
+            }
+            
+            if (window.StacksProvider) {
+                debugInfo.push('✅ Stacks Provider detected');
+            } else {
+                debugInfo.push('❌ Stacks Provider not found');
+            }
+            
+            debugInfo.push(`📄 sBTC Contract: ${SBTC_CONTRACT.address}.${SBTC_CONTRACT.name}`);
+            
+            // Show debug info
+            document.getElementById('debug-content').innerHTML = debugInfo.join('<br>');
+            document.getElementById('debug-info').classList.remove('hidden');
         }
 
-        function updateWalletUI(userData) {
+        function updateWalletUI(address, type) {
             isConnected = true;
-            const address = userData.profile?.stxAddress?.testnet || userData.profile?.stxAddress?.mainnet;
+            connectedAddress = address;
+            walletType = type;
             
-            if (address) {
-                document.getElementById('wallet-status').classList.remove('hidden');
-                document.getElementById('wallet-address').textContent = 
-                    address.slice(0, 8) + '...' + address.slice(-8);
-                document.getElementById('payment-button').textContent = 'Send sBTC Payment';
-                document.getElementById('wallet-status').classList.add('bg-green-50', 'border-green-200');
-                
-                showStatus('Wallet connected successfully!', 'success');
-            }
+            document.getElementById('wallet-status').classList.remove('hidden');
+            document.getElementById('wallet-address').textContent = 
+                address.slice(0, 8) + '...' + address.slice(-8);
+            document.getElementById('payment-button').textContent = 'Send Payment';
+            document.getElementById('wallet-status').classList.add('bg-green-50', 'border-green-200');
+            
+            showStatus(`Wallet connected successfully! (${type})`, 'success');
         }
 
         async function handlePayment() {
@@ -188,26 +205,49 @@ window.addEventListener('load', function() {
 
         async function connectWallet() {
             try {
-                showStatus('Connecting wallet...', 'info');
+                showStatus('Attempting to connect wallet...', 'info');
                 
-                const authOptions = {
-                    appDetails: {
-                        name: 'sBTC Payment Gateway',
-                        icon: window.location.origin + '/favicon.ico',
-                    },
-                    redirectTo: '/',
-                    onFinish: (authData) => {
-                        console.log('Auth completed:', authData);
-                        updateWalletUI(authData.userSession.loadUserData());
-                    },
-                    userSession: userSession,
-                };
-
-                await StacksConnect.showConnect(authOptions);
+                // Try Xverse first
+                if (window.btc && window.btc.request) {
+                    try {
+                        const response = await window.btc.request('getAddresses');
+                        console.log('Xverse response:', response);
+                        
+                        if (response && response.addresses) {
+                            const stxAddress = response.addresses.find(addr => addr.type === 'stx');
+                            if (stxAddress) {
+                                updateWalletUI(stxAddress.address, 'Xverse');
+                                return;
+                            }
+                        }
+                    } catch (xverseError) {
+                        console.log('Xverse connection failed:', xverseError);
+                    }
+                }
+                
+                // Try Leather
+                if (window.LeatherProvider) {
+                    try {
+                        const response = await window.LeatherProvider.request('getAddresses');
+                        console.log('Leather response:', response);
+                        
+                        if (response && response.addresses) {
+                            const stxAddress = response.addresses.find(addr => addr.type === 'stx');
+                            if (stxAddress) {
+                                updateWalletUI(stxAddress.address, 'Leather');
+                                return;
+                            }
+                        }
+                    } catch (leatherError) {
+                        console.log('Leather connection failed:', leatherError);
+                    }
+                }
+                
+                showStatus('No compatible wallet found. Please install Xverse or Leather wallet, ensure it\'s unlocked and in testnet mode, then refresh the page.', 'error');
                 
             } catch (error) {
                 console.error('Connection error:', error);
-                showStatus('Wallet connection failed: ' + error.message, 'error');
+                showStatus('Connection error: ' + error.message, 'error');
             }
         }
 
@@ -215,6 +255,7 @@ window.addEventListener('load', function() {
             const recipient = document.getElementById('recipient').value.trim();
             const amount = parseFloat(document.getElementById('amount').value);
             const memo = document.getElementById('memo').value.trim();
+            const paymentType = document.getElementById('payment-type').value;
 
             // Validation
             if (!recipient || !isValidStacksAddress(recipient)) {
@@ -227,39 +268,126 @@ window.addEventListener('load', function() {
                 return;
             }
 
-            // Convert to microSTX (1 STX = 1,000,000 microSTX)
-            const amountMicroSTX = Math.floor(amount * 1000000);
-
             showStatus('Preparing transaction...', 'info');
             
             try {
-                const network = new StacksNetwork.StacksTestnet();
-                
-                // Simple STX transfer for demo (in production, use sBTC contract)
-                const txOptions = {
-                    recipient: recipient,
-                    amount: amountMicroSTX,
-                    memo: memo,
-                    network: network,
-                    appDetails: {
-                        name: 'sBTC Payment Gateway',
-                        icon: window.location.origin + '/favicon.ico',
-                    },
-                    onFinish: (data) => {
-                        console.log('Transaction completed:', data);
-                        showStatus('Transaction submitted! TX ID: ' + data.txId, 'success');
-                        addTransactionToHistory(data.txId, amount, recipient);
-                    },
-                    onCancel: () => {
-                        showStatus('Transaction cancelled by user', 'info');
-                    }
-                };
-
-                await StacksConnect.openSTXTransfer(txOptions);
+                if (paymentType === 'sbtc') {
+                    await processSBTCPayment(recipient, amount, memo);
+                } else {
+                    await processSTXPayment(recipient, amount, memo);
+                }
                 
             } catch (error) {
                 console.error('Payment error:', error);
                 showStatus('Payment failed: ' + error.message, 'error');
+            }
+        }
+
+        async function processSBTCPayment(recipient, amount, memo) {
+            // Convert sBTC amount to the correct unit (8 decimals like Bitcoin)
+            const amountSatoshi = Math.floor(amount * 100000000);
+            
+            try {
+                if (walletType === 'Xverse' && window.btc) {
+                    // Xverse contract call for SIP-010 token transfer
+                    const txOptions = {
+                        contractAddress: SBTC_CONTRACT.address,
+                        contractName: SBTC_CONTRACT.name,
+                        functionName: 'transfer',
+                        functionArgs: [
+                            {
+                                type: 'uint',
+                                value: amountSatoshi.toString()
+                            },
+                            {
+                                type: 'principal',
+                                value: connectedAddress
+                            },
+                            {
+                                type: 'principal',
+                                value: recipient
+                            },
+                            memo ? {
+                                type: 'some',
+                                value: {
+                                    type: 'buff',
+                                    value: Array.from(new TextEncoder().encode(memo)).map(b => b.toString(16).padStart(2, '0')).join('')
+                                }
+                            } : {
+                                type: 'none'
+                            }
+                        ],
+                        network: 'testnet'
+                    };
+                    
+                    const result = await window.btc.request('stx_callContract', txOptions);
+                    showStatus('sBTC transaction submitted! TX ID: ' + result.txid, 'success');
+                    addTransactionToHistory(result.txid, amount, recipient, 'sBTC');
+                    
+                } else if (walletType === 'Leather' && window.LeatherProvider) {
+                    // Leather contract call for SIP-010 token transfer
+                    const txOptions = {
+                        method: 'stx_callContract',
+                        params: {
+                            contractAddress: SBTC_CONTRACT.address,
+                            contractName: SBTC_CONTRACT.name,
+                            functionName: 'transfer',
+                            functionArgs: [
+                                `u${amountSatoshi}`,
+                                `'${connectedAddress}`,
+                                `'${recipient}`,
+                                memo ? `(some 0x${Array.from(new TextEncoder().encode(memo)).map(b => b.toString(16).padStart(2, '0')).join('')})` : 'none'
+                            ]
+                        }
+                    };
+                    
+                    const result = await window.LeatherProvider.request(txOptions);
+                    showStatus('sBTC transaction submitted! TX ID: ' + result.txid, 'success');
+                    addTransactionToHistory(result.txid, amount, recipient, 'sBTC');
+                    
+                } else {
+                    throw new Error('sBTC transfers not supported for this wallet type');
+                }
+            } catch (error) {
+                console.error('sBTC transfer failed:', error);
+                showStatus('sBTC transfer failed, trying STX fallback: ' + error.message, 'error');
+                // Fallback to STX
+                await processSTXPayment(recipient, amount, memo);
+            }
+        }
+
+        async function processSTXPayment(recipient, amount, memo) {
+            // Convert to microSTX
+            const amountMicroSTX = Math.floor(amount * 1000000);
+            
+            if (walletType === 'Xverse' && window.btc) {
+                const txOptions = {
+                    recipient: recipient,
+                    amount: amountMicroSTX.toString(),
+                    memo: memo || undefined,
+                    network: 'testnet'
+                };
+                
+                const result = await window.btc.request('stx_transferSTX', txOptions);
+                showStatus('STX transaction submitted! TX ID: ' + result.txid, 'success');
+                addTransactionToHistory(result.txid, amount, recipient, 'STX');
+                
+            } else if (walletType === 'Leather' && window.LeatherProvider) {
+                const txOptions = {
+                    method: 'stx_transferSTX',
+                    params: {
+                        recipient: recipient,
+                        amount: amountMicroSTX.toString(),
+                        memo: memo || undefined
+                    }
+                };
+                
+                const result = await window.LeatherProvider.request(txOptions);
+                showStatus('STX transaction submitted! TX ID: ' + result.txid, 'success');
+                addTransactionToHistory(result.txid, amount, recipient, 'STX');
+                
+            } else {
+                throw new Error('STX transfers not supported for this wallet type');
             }
         }
 
@@ -283,18 +411,18 @@ window.addEventListener('load', function() {
             statusDiv.innerHTML = '';
             statusDiv.appendChild(statusElement);
             
-            // Auto-remove success/info messages after 5 seconds
+            // Auto-remove success/info messages after 10 seconds
             if (type !== 'error') {
                 setTimeout(() => {
                     if (statusElement.parentNode) {
                         statusElement.remove();
                     }
-                }, 5000);
+                }, 10000);
             }
         }
 
-        // Add transaction to history (for demo purposes)
-        function addTransactionToHistory(txId, amount, recipient) {
+        // Add transaction to history
+        function addTransactionToHistory(txId, amount, recipient, tokenType = 'STX') {
             const historyDiv = document.getElementById('transaction-history');
             const txList = document.getElementById('tx-list');
             
@@ -303,7 +431,7 @@ window.addEventListener('load', function() {
             txElement.innerHTML = `
                 <div class="flex justify-between items-center">
                     <div>
-                        <div class="text-sm font-medium">${amount} sBTC</div>
+                        <div class="text-sm font-medium">${amount} ${tokenType}</div>
                         <div class="text-xs text-gray-500">To: ${recipient.slice(0, 12)}...</div>
                     </div>
                     <div class="text-xs text-gray-500">Pending</div>
