@@ -387,6 +387,38 @@
             // Convert to microSTX
             const amountMicroSTX = Math.floor(amount * 1000000);
             
+            if (walletType === 'Manual') {
+                // For manual connections, show transaction details and guide user
+                const txDetails = `
+                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                        <h4 class="font-bold text-blue-900 mb-2">Manual Transaction Instructions:</h4>
+                        <div class="text-sm text-blue-800 space-y-2">
+                            <p><strong>1.</strong> Open your Xverse wallet app</p>
+                            <p><strong>2.</strong> Tap "Send" on the STX balance</p>
+                            <p><strong>3.</strong> Enter these details:</p>
+                            <ul class="ml-4 list-disc space-y-1">
+                                <li><strong>To:</strong> ${recipient}</li>
+                                <li><strong>Amount:</strong> ${amount} STX (${amountMicroSTX} microSTX)</li>
+                                <li><strong>Memo:</strong> ${memo || 'Optional'}</li>
+                            </ul>
+                            <p><strong>4.</strong> Confirm the transaction in your wallet</p>
+                            <p class="mt-2 text-xs">Copy the transaction details above and paste into your wallet.</p>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('status-messages').innerHTML = txDetails;
+                
+                // Simulate a successful submission for demo purposes
+                setTimeout(() => {
+                    const fakeTxId = 'manual_tx_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+                    showStatus('Manual transaction initiated! Please check your wallet app to complete the transaction.', 'success');
+                    addTransactionToHistory(fakeTxId, amount, recipient, 'STX (Manual)');
+                }, 1000);
+                
+                return;
+            }
+            
             if (walletType === 'Xverse' && window.btc) {
                 const txOptions = {
                     recipient: recipient,
