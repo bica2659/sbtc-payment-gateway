@@ -207,10 +207,21 @@
             try {
                 showStatus('Attempting to connect wallet...', 'info');
                 
-                // Try Xverse first
-                if (window.btc && window.btc.request) {
+                // Multiple detection methods for Xverse
+                let xverseProvider = window.btc || window.BitcoinProvider || window.xverse;
+                
+                if (xverseProvider) {
                     try {
-                        const response = await window.btc.request('getAddresses');
+                        showStatus('Xverse wallet found, requesting addresses...', 'info');
+                        
+                        // Try different methods to get addresses
+                        let response;
+                        if (xverseProvider.request) {
+                            response = await xverseProvider.request('getAddresses');
+                        } else if (xverseProvider.getAddresses) {
+                            response = await xverseProvider.getAddresses();
+                        }
+                        
                         console.log('Xverse response:', response);
                         
                         if (response && response.addresses) {
@@ -220,8 +231,16 @@
                                 return;
                             }
                         }
+                        
+                        // Fallback: try to trigger wallet connection popup
+                        if (confirm('Xverse wallet detected but connection failed. This might open your wallet app. Continue?')) {
+                            // This might trigger the wallet app on mobile
+                            window.location.href = 'xverse://connect';
+                        }
+                        
                     } catch (xverseError) {
                         console.log('Xverse connection failed:', xverseError);
+                        showStatus('Xverse detected but connection failed: ' + xverseError.message, 'error');
                     }
                 }
                 
@@ -243,7 +262,15 @@
                     }
                 }
                 
-                showStatus('No compatible wallet found. Please install Xverse or Leather wallet, ensure it\'s unlocked and in testnet mode, then refresh the page.', 'error');
+                // Manual connection option
+                const manualAddress = prompt('Manual connection: Enter your testnet STX address (starts with ST):');
+                if (manualAddress && isValidStacksAddress(manualAddress)) {
+                    updateWalletUI(manualAddress, 'Manual');
+                    showStatus('Manually connected! Note: You\'ll need to confirm transactions in your wallet app.', 'success');
+                    return;
+                }
+                
+                showStatus('Connection failed. Try opening this page in your Xverse wallet\'s built-in browser instead of your phone\'s browser.', 'error');
                 
             } catch (error) {
                 console.error('Connection error:', error);
