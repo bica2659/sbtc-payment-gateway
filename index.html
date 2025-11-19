@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrossRealm Admin Dashboard</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-item.active {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .wallet-info {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+        }
+        
+        .header {
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+        
+        .stat-change {
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        
+        .stat-change.positive {
+            color: #4caf50;
+        }
+        
+        .stat-change.negative {
+            color: #f44336;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-success {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .badge-warning {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .badge-info {
+            background: #2196f3;
+            color: white;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            text-align: left;
+            padding: 12px;
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Status Indicators */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-dot.green {
+            background: #4caf50;
+        }
+        
+        .status-dot.red {
+            background: #f44336;
+        }
+        
+        .status-dot.yellow {
+            background: #ff9800;
+        }
+        
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Connect Section */
+        .connect-container {
+            max-width: 500px;
+            margin: 100px auto;
+            text-align: center;
+        }
+        
+        .connect-card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .connect-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        /* Phase Cards */
+        .phase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .phase-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #e0e0e0;
+        }
+        
+        .phase-card.enabled {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Connect Section -->
+    <div id="connectSection">
+        <div class="connect-container">
+            <div class="connect-card">
+                <div class="connect-icon">🎮</div>
+                <h1>CrossRealm Admin Dashboard</h1>
+                <p style="margin: 20px 0; color: #666;">Connect your wallet to access admin features</p>
+                <button class="btn btn-primary" onclick="connectWallet()" style="width: 100%;">
+                    🔗 Connect MetaMask
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboardSection" class="hidden">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">🎮 CrossRealm</div>
+            
+            <div class="wallet-info">
+                <strong>Connected:</strong><br>
+                <span id="walletAddress"></span>
+            </div>
+            
+            <div class="nav-item active" onclick="showSection('overview')">
+                📊 Overview
+            </div>
+            <div class="nav-item" onclick="showSection('phases')">
+                🔌 Phase Control
+            </div>
+            <div class="nav-item" onclick="showSection('treasury')">
+                💰 Treasury
+            </div>
+            <div class="nav-item" onclick="showSection('analytics')">
+                📈 Analytics
+            </div>
+            <div class="nav-item" onclick="showSection('games')">
+                🎯 Live Games
+            </div>
+            <div class="nav-item" onclick="showSection('settings')">
+                ⚙️ Settings
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Overview Section -->
+            <div id="overviewSection">
+                <div class="header">
+                    <h1>📊 Platform Overview</h1>
+                    <p>Real-time statistics and platform health</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Games</div>
+                        <div class="stat-value" id="totalGames">-</div>
+                        <div class="stat-change positive" id="gamesChange">+0 today</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label">Total Volume</div>
+                        <div class="stat-value" id="totalVolume">-</div>
+                        <div class="stat-change positive" id="volumeChange">+0 CORE</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label">Active Players</div>
+                        <div class="stat-value" id="activePlayers">-</div>
+                        <div class="stat-change positive" id="playersChange">+0 this week</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label">Dev Revenue</div>
+                        <div class="stat-value" id="devRevenue">-</div>
+                        <div class="stat-change positive" id="revenueChange">Available</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">⚡ Quick Actions</h2>
+                    </div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="claimDevPot()">
+                            💰 Claim Dev Pot
+                        </button>
+                        <button class="btn btn-primary" onclick="refreshData()">
+                            🔄 Refresh Data
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportData()">
+                            📥 Export Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Platform Status -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">🔌 Platform Status</h2>
+                    </div>
+                    <table class="table">
+                        <tr>
+                            <td><span class="status-dot green"></span>Phase 1: Core</td>
+                            <td><span class="badge badge-success">LIVE</span></td>
+                            <td>All systems operational</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-dot" id="phase2Dot"></span>Phase 2: Multi-Token</td>
+                            <td><span class="badge" id="phase2StatusBadge">CHECKING...</span></td>
+                            <td id="phase2StatusText">Checking status...</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-dot" id="phase3Dot"></span>Phase 3: Cross-Chain</td>
+                            <td><span class="badge" id="phase3StatusBadge">CHECKING...</span></td>
+                            <td id="phase3StatusText">Checking status...</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-dot" id="phase4Dot"></span>Phase 4: Governance</td>
+                            <td><span class="badge" id="phase4StatusBadge">CHECKING...</span></td>
+                            <td id="phase4StatusText">Checking status...</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Phase Control Section -->
+            <div id="phasesSection" class="hidden">
+                <div class="header">
+                    <h1>🔌 Phase Control</h1>
+                    <p>Enable platform features with one click</p>
+                </div>
+
+                <div class="phase-grid">
+                    <!-- Phase 2 -->
+                    <div class="phase-card" id="phase2Card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3>Phase 2: Multi-Token</h3>
+                            <span class="badge" id="phase2Badge">DISABLED</span>
+                        </div>
+                        <p style="color: #666; margin-bottom: 16px;">
+                            Allow players to stake with USDT, USDC, and other ERC20 tokens. 
+                            Automatically swaps to CORE via DEX.
+                        </p>
+                        <button class="btn btn-primary" id="phase2Btn" onclick="enablePhase2()" style="width: 100%;">
+                            🚀 Enable Phase 2
+                        </button>
+                        <div id="phase2Status" style="margin-top: 12px;"></div>
+                    </div>
+
+                    <!-- Phase 3 -->
+                    <div class="phase-card" id="phase3Card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3>Phase 3: Cross-Chain</h3>
+                            <span class="badge" id="phase3Badge">DISABLED</span>
+                        </div>
+                        <p style="color: #666; margin-bottom: 16px;">
+                            Enable players from BSC, Arbitrum, and other chains to play using LayerZero.
+                        </p>
+                        <button class="btn btn-primary" id="phase3Btn" onclick="enablePhase3()" style="width: 100%;">
+                            🚀 Enable Phase 3
+                        </button>
+                        <div id="phase3Status" style="margin-top: 12px;"></div>
+                    </div>
+
+                    <!-- Phase 4 -->
+                    <div class="phase-card" id="phase4Card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3>Phase 4: Governance</h3>
+                            <span class="badge" id="phase4Badge">DISABLED</span>
+                        </div>
+                        <p style="color: #666; margin-bottom: 16px;">
+                            Enable DAO governance with REALM tokens. Community can vote on proposals.
+                        </p>
+                        <button class="btn btn-primary" id="phase4Btn" onclick="enablePhase4()" style="width: 100%;">
+                            🚀 Enable Phase 4
+                        </button>
+                        <div id="phase4Status" style="margin-top: 12px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Treasury Section -->
+            <div id="treasurySection" class="hidden">
+                <div class="header">
+                    <h1>💰 Treasury Management</h1>
+                    <p>Manage platform funds and revenue</p>
+                </div>
+
+                <!-- Treasury Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Available to Claim</div>
+                        <div class="stat-value" id="treasuryClaimable">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Claimed</div>
+                        <div class="stat-value" id="treasuryTotalClaimed">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Contract Balance</div>
+                        <div class="stat-value" id="treasuryContractBalance">-</div>
+                    </div>
+                </div>
+
+                <!-- Claim Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">💸 Claim Dev Revenue</h2>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Select Month</label>
+                        <select id="claimMonth" class="form-input">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount Available</label>
+                        <div style="font-size: 24px; font-weight: bold; color: #4caf50;" id="claimAmount">
+                            0 CORE
+                        </div>
+                    </div>
+                    <button class="btn btn-success" onclick="claimDevPotForMonth()" style="width: 100%;">
+                        💰 Claim Revenue
+                    </button>
+                </div>
+
+                <!-- Staking Management -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">🏦 Staking Contract</h2>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Top-Up Staking Pool</label>
+                        <input type="number" id="topUpAmount" class="form-input" placeholder="Amount in CORE" step="0.01">
+                    </div>
+                    <button class="btn btn-primary" onclick="topUpStaking()" style="width: 100%;">
+                        💵 Top-Up Staking
+                    </button>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analyticsSection" class="hidden">
+                <div class="header">
+                    <h1>📈 Platform Analytics</h1>
+                    <p>Detailed insights and trends</p>
+                </div>
+
+                <!-- Time Range Selector -->
+                <div class="card">
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-secondary" onclick="setTimeRange('24h')">24 Hours</button>
+                        <button class="btn btn-secondary" onclick="setTimeRange('7d')">7 Days</button>
+                        <button class="btn btn-secondary" onclick="setTimeRange('30d')">30 Days</button>
+                        <button class="btn btn-secondary" onclick="setTimeRange('all')">All Time</button>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">📊 Games Over Time</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="gamesChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">💰 Volume Over Time</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="volumeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">🎮 Games by Type</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="gamesTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Games Section -->
+            <div id="gamesSection" class="hidden">
+                <div class="header">
+                    <h1>🎯 Live Games</h1>
+                    <p>Currently active games on the platform</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Active Games</h2>
+                        <span class="badge badge-info" id="activeGamesCount">0</span>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Game ID</th>
+                                <th>Type</th>
+                                <th>Stake</th>
+                                <th>Players</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gamesTableBody">
+                            <tr>
+                                <td colspan="6" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading games...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settingsSection" class="hidden">
+                <div class="header">
+                    <h1>⚙️ Contract Settings</h1>
+                    <p>Manage contract addresses and configuration</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">📋 Contract Addresses</h2>
+                    </div>
+                    <table class="table">
+                        <tr>
+                            <td><strong>Hub</strong></td>
+                            <td><code id="hubAddress"></code></td>
+                            <td><button class="btn btn-secondary" onclick="copyAddress('hub')">📋 Copy</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rewards</strong></td>
+                            <td><code id="rewardsAddress"></code></td>
+                            <td><button class="btn btn-secondary" onclick="copyAddress('rewards')">📋 Copy</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Staking</strong></td>
+                            <td><code id="stakingAddress"></code></td>
+                            <td><button class="btn btn-secondary" onclick="copyAddress('staking')">📋 Copy</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Token Gateway</strong></td>
+                            <td><code id="gatewayAddress"></code></td>
+                            <td><button class="btn btn-secondary" onclick="copyAddress('gateway')">📋 Copy</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bridge</strong></td>
+                            <td><code id="bridgeAddress"></code></td>
+                            <td><button class="btn btn-secondary" onclick="copyAddress('bridge')">📋 Copy</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>DAO</strong></td>
+                            <td><code id="daoAddress"></code></td>
+                            <td><button class="btn btn-secondary" onclick="copyAddress('dao')">📋 Copy</button></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURATION ====================
+        // ✅ UPDATED WITH YOUR MAINNET ADDRESSES
+        const CONTRACTS = {
+            // Phase 1: Core Infrastructure (LIVE)
+            HUB: '0x2D0FA241F72B8d9576876E43643374e7088C677f',
+            REWARDS: '0x1ab31E3FBbEE0228AB83276c2C74a42fe3DB3bDc',
+            STAKING: '0x0be0E11A9b2C214B8615C749F5f438C400B9e0DF',
+            NFT: '0x92F172efAb481E40d03FC34102DfC9344fE52f68',
+            GAME_CHAT: '0xA0b4c7DCc814D088aA4dBf323D8aA3Df0c6948C4',
+            VERIFIERS: {
+                CHESS: '0x252C94b74B52a44b6032c940369e9f50387E2AE1',
+                CHECKERS: '0x3Af55Fd76cfbFCa1584B4d3dE79Ce152729Dc521'
+            },
+            
+            // Phase 2: Multi-Token Support
+            TOKEN_GATEWAY: '0xA0eE238f76e2E9B03Ae3bA7A2a013523870137fb',
+            
+            // Phase 3: Cross-Chain Bridge
+            BRIDGE: '0xA0484D136c4C5324e12834831E492B613445a041',
+            TOURNAMENT: '0x19A21BB2283C08a8d3b32D1BCFb5285ECd1997ed',
+            
+            // Phase 4: Governance
+            DAO: '0x9E1e6696EEcCbEC531De77a5d17c28D8784645Fb',
+            REALM_TOKEN: '0x9445197Ae66EA083869aCDEc822bb2B98678a5d7'
+        };
+
+        // ABIs (minimal)
+        const HUB_ABI = [
+            'function gameCount() view returns (uint)',
+            'function games(uint) view returns (uint id, string gameType, uint stake, address token, address creator, address player2, bool isAI, bool isPrivate, address referral, bool zeroGas, bool active, string fen, address verifier, uint turn)',
+            'function owner() view returns (address)'
+        ];
+
+        const REWARDS_ABI = [
+            'function monthlyDevPotCORE(uint) view returns (uint)',
+            'function devWithdrawCORE(uint) external',
+            'function owner() view returns (address)'
+        ];
+
+        const STAKING_ABI = [
+            'function contributeFunds(uint) external payable'
+        ];
+
+        const GATEWAY_ABI = [
+            'function enabled() view returns (bool)',
+            'function enable() external'
+        ];
+
+        const BRIDGE_ABI = [
+            'function enabled() view returns (bool)',
+            'function enable() external'
+        ];
+
+        const DAO_ABI = [
+            'function enabled() view returns (bool)',
+            'function enable() external'
+        ];
+
+        const REALM_ABI = [
+            'function tradingEnabled() view returns (bool)',
+            'function enableTrading() external'
+        ];
+
+        let provider, signer, userAddress;
+        let charts = {};
+        let autoRefreshInterval;
+
+        // ==================== INITIALIZATION ====================
+        async function connectWallet() {
+            try {
+                if (!window.ethereum) {
+                    alert('Please install MetaMask!');
+                    return;
+                }
+
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                // Verify owner
+                const hubContract = new ethers.Contract(CONTRACTS.HUB, HUB_ABI, signer);
+                const owner = await hubContract.owner();
+
+                if (userAddress.toLowerCase() !== owner.toLowerCase()) {
+                    alert('⚠️ You are not the contract owner!\n\nOnly the owner can access the admin dashboard.');
+                    return;
+                }
+
+                // Show dashboard
+                document.getElementById('connectSection').classList.add('hidden');
+                document.getElementById('dashboardSection').classList.remove('hidden');
+                document.getElementById('walletAddress').textContent = 
+                    userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+
+                // Initialize
+                await initializeDashboard();
+                
+                // Start auto-refresh
+                startAutoRefresh();
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                alert('Failed to connect: ' + error.message);
+            }
+        }
+
+        async function initializeDashboard() {
+            await Promise.all([
+                loadOverviewData(),
+                checkAllPhases(),
+                loadTreasuryData(),
+                loadGamesData(),
+                initializeCharts()
+            ]);
+
+            updateContractAddresses();
+        }
+
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => {
+                if (document.getElementById('overviewSection').classList.contains('hidden') === false) {
+                    loadOverviewData();
+                }
+            }, 30000);
+        }
+
+        // ==================== NAVIGATION ====================
+        function showSection(section) {
+            const sections = ['overview', 'phases', 'treasury', 'analytics', 'games', 'settings'];
+            sections.forEach(s => {
+                document.getElementById(s + 'Section').classList.add('hidden');
+            });
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            event.target.classList.add('active');
+
+            switch(section) {
+                case 'analytics':
+                    updateCharts();
+                    break;
+                case 'games':
+                    loadGamesData();
+                    break;
+            }
+        }
+
+        // ==================== OVERVIEW DATA ====================
+        async function loadOverviewData() {
+            try {
+                const hub = new ethers.Contract(CONTRACTS.HUB, HUB_ABI, provider);
+                const rewards = new ethers.Contract(CONTRACTS.REWARDS, REWARDS_ABI, provider);
+
+                const gameCount = await hub.gameCount();
+                document.getElementById('totalGames').textContent = gameCount.toString();
+
+                const estimatedVolume = gameCount * 0.1;
+                document.getElementById('totalVolume').textContent = estimatedVolume.toFixed(2) + ' CORE';
+
+                const currentMonth = getCurrentMonthTimestamp();
+                const devPot = await rewards.monthlyDevPotCORE(currentMonth);
+                document.getElementById('devRevenue').textContent = 
+                    ethers.utils.formatEther(devPot) + ' CORE';
+
+                document.getElementById('activePlayers').textContent = '~' + Math.floor(gameCount / 2);
+
+            } catch (error) {
+                console.error('Error loading overview:', error);
+            }
+        }
+
+        // ==================== PHASE MANAGEMENT ====================
+        async function checkAllPhases() {
+            await Promise.all([
+                checkPhase2Status(),
+                checkPhase3Status(),
+                checkPhase4Status()
+            ]);
+        }
+
+        async function checkPhase2Status() {
+            try {
+                const gateway = new ethers.Contract(CONTRACTS.TOKEN_GATEWAY, GATEWAY_ABI, provider);
+                const enabled = await gateway.enabled();
+                updatePhaseStatus(2, enabled);
+            } catch (error) {
+                console.error('Phase 2 check error:', error);
+                updatePhaseStatus(2, false);
+            }
+        }
+
+        async function checkPhase3Status() {
+            try {
+                const bridge = new ethers.Contract(CONTRACTS.BRIDGE, BRIDGE_ABI, provider);
+                const enabled = await bridge.enabled();
+                updatePhaseStatus(3, enabled);
+            } catch (error) {
+                console.error('Phase 3 check error:', error);
+                updatePhaseStatus(3, false);
+            }
+        }
+
+        async function checkPhase4Status() {
+            try {
+                const dao = new ethers.Contract(CONTRACTS.DAO, DAO_ABI, provider);
+                const enabled = await dao.enabled();
+                updatePhaseStatus(4, enabled);
+            } catch (error) {
+                console.error('Phase 4 check error:', error);
+                updatePhaseStatus(4, false);
+            }
+        }
+
+        function updatePhaseStatus(phase, enabled) {
+            const dot = document.getElementById(`phase${phase}Dot`);
+            const badge = document.getElementById(`phase${phase}StatusBadge`);
+            const text = document.getElementById(`phase${phase}StatusText`);
+
+            if (enabled) {
+                dot.classList.add('green');
+                dot.classList.remove('red', 'yellow');
+                badge.textContent = 'ENABLED';
+                badge.className = 'badge badge-success';
+                text.textContent = 'Operational';
+            } else {
+                dot.classList.add('red');
+                dot.classList.remove('green', 'yellow');
+                badge.textContent = 'DISABLED';
+                badge.className = 'badge badge-warning';
+                text.textContent = 'Not activated';
+            }
+
+            const card = document.getElementById(`phase${phase}Card`);
+            const phaseBadge = document.getElementById(`phase${phase}Badge`);
+            const btn = document.getElementById(`phase${phase}Btn`);
+
+            if (enabled) {
+                card.classList.add('enabled');
+                phaseBadge.textContent = 'ENABLED';
+                phaseBadge.className = 'badge badge-success';
+                btn.textContent = '✅ Enabled';
+                btn.disabled = true;
+                btn.className = 'btn btn-secondary';
+            } else {
+                card.classList.remove('enabled');
+                phaseBadge.textContent = 'DISABLED';
+                phaseBadge.className = 'badge badge-warning';
+                btn.textContent = `🚀 Enable Phase ${phase}`;
+                btn.disabled = false;
+                btn.className = 'btn btn-primary';
+            }
+        }
+
+        async function enablePhase2() {
+            const btn = document.getElementById('phase2Btn');
+            const status = document.getElementById('phase2Status');
+
+            btn.textContent = '⏳ Enabling...';
+            btn.disabled = true;
+            status.innerHTML = '<p style="color: #666;">Sending transaction...</p>';
+
+            try {
+                const gateway = new ethers.Contract(CONTRACTS.TOKEN_GATEWAY, GATEWAY_ABI, signer);
+                const tx = await gateway.enable();
+                
+                status.innerHTML = '<p style="color: #666;">Waiting for confirmation...</p>';
+                await tx.wait();
+
+                status.innerHTML = '<p style="color: #4caf50; font-weight: bold;">✅ Phase 2 Enabled!</p>';
+                await checkPhase2Status();
+                await loadOverviewData();
+            } catch (error) {
+                console.error('Enable Phase 2 error:', error);
+                status.innerHTML = '<p style="color: #f44336;">❌ ' + error.message + '</p>';
+                btn.textContent = '🚀 Enable Phase 2';
+                btn.disabled = false;
+            }
+        }
+
+        async function enablePhase3() {
+            const btn = document.getElementById('phase3Btn');
+            const status = document.getElementById('phase3Status');
+
+            btn.textContent = '⏳ Enabling...';
+            btn.disabled = true;
+            status.innerHTML = '<p style="color: #666;">Sending transaction...</p>';
+
+            try {
+                const bridge = new ethers.Contract(CONTRACTS.BRIDGE, BRIDGE_ABI, signer);
+                const tx = await bridge.enable();
+                
+                status.innerHTML = '<p style="color: #666;">Waiting for confirmation...</p>';
+                await tx.wait();
+
+                status.innerHTML = '<p style="color: #4caf50; font-weight: bold;">✅ Phase 3 Enabled!</p>';
+                await checkPhase3Status();
+                await loadOverviewData();
+            } catch (error) {
+                console.error('Enable Phase 3 error:', error);
+                status.innerHTML = '<p style="color: #f44336;">❌ ' + error.message + '</p>';
+                btn.textContent = '🚀 Enable Phase 3';
+                btn.disabled = false;
+            }
+        }
+
+        async function enablePhase4() {
+            const btn = document.getElementById('phase4Btn');
+            const status = document.getElementById('phase4Status');
+
+            btn.textContent = '⏳ Enabling...';
+            btn.disabled = true;
+            status.innerHTML = '<p style="color: #666;">Step 1/2: Enabling DAO...</p>';
+
+            try {
+                const dao = new ethers.Contract(CONTRACTS.DAO, DAO_ABI, signer);
+                const tx1 = await dao.enable();
+                await tx1.wait();
+
+                status.innerHTML = '<p style="color: #666;">Step 2/2: Enabling REALM trading...</p>';
+
+                const realm = new ethers.Contract(CONTRACTS.REALM_TOKEN, REALM_ABI, signer);
+                const tx2 = await realm.enableTrading();
+                await tx2.wait();
+
+                status.innerHTML = '<p style="color: #4caf50; font-weight: bold;">✅ Phase 4 Enabled!</p>';
+                await checkPhase4Status();
+                await loadOverviewData();
+            } catch (error) {
+                console.error('Enable Phase 4 error:', error);
+                status.innerHTML = '<p style="color: #f44336;">❌ ' + error.message + '</p>';
+                btn.textContent = '🚀 Enable Phase 4';
+                btn.disabled = false;
+            }
+        }
+
+        // ==================== TREASURY ====================
+        async function loadTreasuryData() {
+            try {
+                const rewards = new ethers.Contract(CONTRACTS.REWARDS, REWARDS_ABI, provider);
+                const currentMonth = getCurrentMonthTimestamp();
+                
+                const devPot = await rewards.monthlyDevPotCORE(currentMonth);
+                document.getElementById('treasuryClaimable').textContent = 
+                    ethers.utils.formatEther(devPot) + ' CORE';
+
+                const balance = await provider.getBalance(CONTRACTS.REWARDS);
+                document.getElementById('treasuryContractBalance').textContent = 
+                    ethers.utils.formatEther(balance) + ' CORE';
+
+                populateMonthSelector();
+                
+            } catch (error) {
+                console.error('Treasury load error:', error);
+            }
+        }
+
+        function populateMonthSelector() {
+            const select = document.getElementById('claimMonth');
+            select.innerHTML = '';
+            
+            const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                const timestamp = Math.floor(date.getTime() / 1000);
+                
+                const option = document.createElement('option');
+                option.value = timestamp;
+                option.textContent = monthName;
+                select.appendChild(option);
+            }
+
+            select.addEventListener('change', updateClaimAmount);
+            updateClaimAmount();
+        }
+
+        async function updateClaimAmount() {
+            const select = document.getElementById('claimMonth');
+            const timestamp = select.value;
+            
+            try {
+                const rewards = new ethers.Contract(CONTRACTS.REWARDS, REWARDS_ABI, provider);
+                const amount = await rewards.monthlyDevPotCORE(timestamp);
+                document.getElementById('claimAmount').textContent = 
+                    ethers.utils.formatEther(amount) + ' CORE';
+            } catch (error) {
+                console.error('Update claim amount error:', error);
+            }
+        }
+
+        async function claimDevPot() {
+            const currentMonth = getCurrentMonthTimestamp();
+            await claimDevPotForMonth();
+        }
+
+        async function claimDevPotForMonth() {
+            const select = document.getElementById('claimMonth');
+            const timestamp = select.value;
+
+            if (!confirm(`Claim dev revenue for this month?`)) return;
+
+            try {
+                const rewards = new ethers.Contract(CONTRACTS.REWARDS, REWARDS_ABI, signer);
+                const monthStart = Math.floor(timestamp / (30 * 24 * 60 * 60)) * (30 * 24 * 60 * 60);
+                
+                const tx = await rewards.devWithdrawCORE(monthStart);
+                alert('Transaction sent! Waiting for confirmation...');
+                await tx.wait();
+                
+                alert('✅ Successfully claimed dev revenue!');
+                await loadTreasuryData();
+                await loadOverviewData();
+            } catch (error) {
+                console.error('Claim error:', error);
+                alert('❌ Claim failed: ' + error.message);
+            }
+        }
+
+        async function topUpStaking() {
+            const amount = document.getElementById('topUpAmount').value;
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            try {
+                const staking = new ethers.Contract(CONTRACTS.STAKING, STAKING_ABI, signer);
+                const value = ethers.utils.parseEther(amount);
+                
+                const tx = await staking.contributeFunds(value, { value });
+                alert('Transaction sent! Waiting for confirmation...');
+                await tx.wait();
+                
+                alert('✅ Successfully topped up staking pool!');
+                document.getElementById('topUpAmount').value = '';
+            } catch (error) {
+                console.error('Top up error:', error);
+                alert('❌ Top up failed: ' + error.message);
+            }
+        }
+
+        // ==================== CHARTS ====================
+        function initializeCharts() {
+            const gamesCtx = document.getElementById('gamesChart');
+            charts.games = new Chart(gamesCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Games Played',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            const volumeCtx = document.getElementById('volumeChart');
+            charts.volume = new Chart(volumeCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Volume (CORE)',
+                        data: [],
+                        backgroundColor: '#4caf50'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            const typeCtx = document.getElementById('gamesTypeChart');
+            charts.type = new Chart(typeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Chess', 'Checkers'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#667eea', '#764ba2']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            updateCharts();
+        }
+
+        async function updateCharts() {
+            const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const data = [12, 19, 15, 25, 22, 30, 28];
+            
+            charts.games.data.labels = labels;
+            charts.games.data.datasets[0].data = data;
+            charts.games.update();
+
+            const volumeData = [1.2, 1.9, 1.5, 2.5, 2.2, 3.0, 2.8];
+            charts.volume.data.labels = labels;
+            charts.volume.data.datasets[0].data = volumeData;
+            charts.volume.update();
+
+            try {
+                const hub = new ethers.Contract(CONTRACTS.HUB, HUB_ABI, provider);
+                const gameCount = await hub.gameCount();
+                
+                const chessGames = Math.floor(gameCount * 0.6);
+                const checkersGames = gameCount - chessGames;
+                
+                charts.type.data.datasets[0].data = [chessGames, checkersGames];
+                charts.type.update();
+            } catch (error) {
+                console.error('Chart update error:', error);
+            }
+        }
+
+        function setTimeRange(range) {
+            console.log('Time range set to:', range);
+            updateCharts();
+        }
+
+        // ==================== GAMES ====================
+        async function loadGamesData() {
+            const tbody = document.getElementById('gamesTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading games...</td></tr>';
+
+            try {
+                const hub = new ethers.Contract(CONTRACTS.HUB, HUB_ABI, provider);
+                const gameCount = await hub.gameCount();
+                
+                let activeCount = 0;
+                const rows = [];
+
+                const start = Math.max(1, gameCount - 19);
+                for (let i = gameCount; i >= start; i--) {
+                    try {
+                        const game = await hub.games(i);
+                        if (game.active) {
+                            activeCount++;
+                            const row = `
+                                <tr>
+                                    <td>#${game.id}</td>
+                                    <td>${game.gameType}</td>
+                                    <td>${ethers.utils.formatEther(game.stake)} CORE</td>
+                                    <td>${game.player2 !== ethers.constants.AddressZero ? '2/2' : '1/2'}</td>
+                                    <td><span class="badge badge-success">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-secondary" onclick="viewGame(${game.id})">View</button>
+                                    </td>
+                                </tr>
+                            `;
+                            rows.push(row);
+                        }
+                    } catch (error) {
+                        console.error('Error loading game ' + i, error);
+                    }
+                }
+
+                document.getElementById('activeGamesCount').textContent = activeCount;
+                tbody.innerHTML = rows.length > 0 ? rows.join('') : 
+                    '<tr><td colspan="6" style="text-align: center; padding: 40px;">No active games</td></tr>';
+
+            } catch (error) {
+                console.error('Load games error:', error);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #f44336;">Error loading games</td></tr>';
+            }
+        }
+
+        function viewGame(gameId) {
+            window.open(`https://scan.coredao.org/tx/${gameId}`, '_blank');
+        }
+
+        // ==================== SETTINGS ====================
+        function updateContractAddresses() {
+            document.getElementById('hubAddress').textContent = CONTRACTS.HUB;
+            document.getElementById('rewardsAddress').textContent = CONTRACTS.REWARDS;
+            document.getElementById('stakingAddress').textContent = CONTRACTS.STAKING;
+            document.getElementById('gatewayAddress').textContent = CONTRACTS.TOKEN_GATEWAY;
+            document.getElementById('bridgeAddress').textContent = CONTRACTS.BRIDGE;
+            document.getElementById('daoAddress').textContent = CONTRACTS.DAO;
+        }
+
+        function copyAddress(type) {
+            let address;
+            switch(type) {
+                case 'hub': address = CONTRACTS.HUB; break;
+                case 'rewards': address = CONTRACTS.REWARDS; break;
+                case 'staking': address = CONTRACTS.STAKING; break;
+                case 'gateway': address = CONTRACTS.TOKEN_GATEWAY; break;
+                case 'bridge': address = CONTRACTS.BRIDGE; break;
+                case 'dao': address = CONTRACTS.DAO; break;
+            }
+
+            navigator.clipboard.writeText(address);
+            alert('✅ Copied to clipboard!');
+        }
+
+        // ==================== UTILITIES ====================
+        function getCurrentMonthTimestamp() {
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            return Math.floor(monthStart.getTime() / 1000);
+        }
+
+        async function refreshData() {
+            await loadOverviewData();
+            alert('✅ Data refreshed!');
+        }
+
+        function exportData() {
+            alert('Export functionality coming soon!');
+        }
+    </script>
+</body>
+</html>
