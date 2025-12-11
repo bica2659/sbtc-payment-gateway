@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEXC Pump Surfer Bot - Automated Crypto Trading</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0B0E11;
+            color: #fff;
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Giant Robot Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -10%;
+            right: -20%;
+            width: 100%;
+            height: 120%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><defs><linearGradient id="robotGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%2300C087;stop-opacity:0.05"/><stop offset="100%" style="stop-color:%2300C087;stop-opacity:0.02"/></linearGradient></defs><g fill="url(%23robotGrad)"><circle cx="200" cy="120" r="80"/><rect x="140" y="200" width="120" height="140" rx="10"/><rect x="100" y="240" width="40" height="80" rx="5"/><rect x="260" y="240" width="40" height="80" rx="5"/><rect x="160" y="340" width="35" height="60" rx="5"/><rect x="205" y="340" width="35" height="60" rx="5"/><circle cx="180" cy="110" r="12" fill="%2300C087" opacity="0.3"/><circle cx="220" cy="110" r="12" fill="%2300C087" opacity="0.3"/><rect x="175" y="140" width="50" height="8" rx="4" fill="%2300C087" opacity="0.2"/><rect x="120" y="200" width="30" height="8" rx="4"/><rect x="250" y="200" width="30" height="8" rx="4"/></g></svg>');
+            background-size: 800px;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.4;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* MEXC Green Theme */
+        :root {
+            --mexc-green: #00C087;
+            --mexc-dark: #0B0E11;
+            --mexc-darker: #06090C;
+            --mexc-card: #141B22;
+            --mexc-border: #1E2329;
+            --mexc-text: #EAECEF;
+            --mexc-text-dim: #848E9C;
+        }
+        
+        /* Header */
+        header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            position: relative;
+        }
+        
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--mexc-green) 0%, #00E5A0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 30px rgba(0, 192, 135, 0.3);
+        }
+        
+        .tagline {
+            font-size: 1.3rem;
+            color: var(--mexc-text-dim);
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+        
+        .verified-badge {
+            display: inline-block;
+            background: rgba(0, 192, 135, 0.1);
+            border: 1px solid var(--mexc-green);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--mexc-green);
+            font-weight: 600;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: var(--mexc-card);
+            border-radius: 16px;
+            padding: 60px 50px;
+            margin: 40px 0;
+            border: 1px solid var(--mexc-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--mexc-green), #00E5A0, var(--mexc-green));
+        }
+        
+        .hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 25px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        
+        .price-tag {
+            font-size: 5rem;
+            font-weight: 900;
+            color: var(--mexc-green);
+            margin: 30px 0;
+            text-shadow: 0 0 40px rgba(0, 192, 135, 0.4);
+        }
+        
+        .price-tag .currency {
+            font-size: 2.5rem;
+            color: var(--mexc-text-dim);
+            font-weight: 400;
+        }
+        
+        .discount {
+            background: linear-gradient(135deg, #FF6B6B, #FF5252);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 25px;
+            display: inline-block;
+            margin: 15px 0;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+        }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin: 50px 0;
+        }
+        
+        .stat-box {
+            background: var(--mexc-card);
+            padding: 35px;
+            border-radius: 12px;
+            border: 1px solid var(--mexc-border);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-box:hover {
+            border-color: var(--mexc-green);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 192, 135, 0.2);
+        }
+        
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--mexc-green);
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: var(--mexc-text-dim);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+        
+        .feature-card {
+            background: var(--mexc-card);
+            padding: 35px;
+            border-radius: 12px;
+            border: 1px solid var(--mexc-border);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--mexc-green);
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 192, 135, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .feature-title {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: var(--mexc-green);
+            font-weight: 700;
+        }
+        
+        .feature-card p {
+            color: var(--mexc-text-dim);
+            line-height: 1.8;
+        }
+        
+        /* CTA Button */
+        .cta-button {
+            background: linear-gradient(135deg, var(--mexc-green), #00E5A0);
+            color: #000;
+            padding: 22px 70px;
+            font-size: 1.6rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 800;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+            margin: 25px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 30px rgba(0, 192, 135, 0.4);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 192, 135, 0.6);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--mexc-card);
+            padding: 45px;
+            border-radius: 16px;
+            max-width: 650px;
+            width: 90%;
+            border: 2px solid var(--mexc-green);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2.5rem;
+            cursor: pointer;
+            color: var(--mexc-text-dim);
+            transition: color 0.3s;
+        }
+        
+        .close-modal:hover {
+            color: #ff6b6b;
+        }
+        
+        .modal h2 {
+            color: var(--mexc-green);
+            margin-bottom: 25px;
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+        
+        .step {
+            background: rgba(0, 192, 135, 0.05);
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 4px solid var(--mexc-green);
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: var(--mexc-green);
+            color: #000;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: 800;
+            margin-right: 12px;
+        }
+        
+        .wallet-address {
+            background: var(--mexc-darker);
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin: 18px 0;
+            border: 1px solid var(--mexc-border);
+            font-size: 0.95rem;
+            color: var(--mexc-green);
+        }
+        
+        .copy-button {
+            background: var(--mexc-green);
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            margin-top: 12px;
+            transition: all 0.3s;
+        }
+        
+        .copy-button:hover {
+            background: #00E5A0;
+            transform: scale(1.05);
+        }
+        
+        input[type="email"], input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--mexc-border);
+            background: var(--mexc-darker);
+            color: white;
+            font-size: 1rem;
+            margin: 12px 0;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--mexc-green);
+        }
+        
+        .promo-input {
+            display: flex;
+            gap: 12px;
+            margin: 25px 0;
+        }
+        
+        .promo-input input {
+            flex: 1;
+        }
+        
+        .apply-promo {
+            background: rgba(0, 192, 135, 0.2);
+            color: var(--mexc-green);
+            border: 1px solid var(--mexc-green);
+            padding: 16px 35px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+        
+        .apply-promo:hover {
+            background: var(--mexc-green);
+            color: #000;
+        }
+        
+        /* Success Modal */
+        .success-icon {
+            font-size: 6rem;
+            margin: 25px 0;
+        }
+        
+        .download-button {
+            background: var(--mexc-green);
+            color: #000;
+            padding: 18px 45px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 15px 10px;
+            font-weight: 800;
+            transition: all 0.3s;
+        }
+        
+        .download-button:hover {
+            background: #00E5A0;
+            transform: translateY(-3px);
+        }
+        
+        .license-box {
+            background: var(--mexc-darker);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border: 2px solid var(--mexc-green);
+        }
+        
+        .license-key {
+            font-family: 'Courier New', monospace;
+            font-size: 1.4rem;
+            color: var(--mexc-green);
+            letter-spacing: 3px;
+            margin: 15px 0;
+            font-weight: 700;
+        }
+        
+        /* Testimonials */
+        .testimonial {
+            background: var(--mexc-card);
+            padding: 35px;
+            border-radius: 12px;
+            margin: 25px 0;
+            border-left: 4px solid var(--mexc-green);
+            border: 1px solid var(--mexc-border);
+        }
+        
+        .testimonial p {
+            font-size: 1.15rem;
+            color: var(--mexc-text);
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+        
+        .testimonial-author {
+            color: var(--mexc-green);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 50px;
+            color: var(--mexc-text-dim);
+            border-top: 1px solid var(--mexc-border);
+            margin-top: 80px;
+        }
+        
+        /* Section Headers */
+        .section-header {
+            text-align: center;
+            font-size: 2.8rem;
+            margin: 80px 0 50px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--mexc-green), #00E5A0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .price-tag {
+                font-size: 3.5rem;
+            }
+            
+            .hero {
+                padding: 40px 25px;
+            }
+            
+            body::before {
+                opacity: 0.2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">🤖 MEXC PUMP SURFER</div>
+            <div class="tagline">AI-Powered Trading Bot • 24/7 Profit Hunter</div>
+            <div class="verified-badge">✓ Verified & Trusted</div>
+        </header>
+
+        <div class="hero">
+            <h1>
+                Stop Trading Manually.<br>
+                Let AI Make Money While You Sleep.
+            </h1>
+            <div class="price-tag">
+                <span class="currency">$</span>500<span class="currency"> USD</span>
+            </div>
+            <div class="discount">🎉 Limited Offer: Use Promo Code for Up to 50% OFF!</div>
+            <br><br>
+            <button class="cta-button" onclick="openPaymentModal()">
+                GET INSTANT ACCESS NOW
+            </button>
+            <p style="color: var(--mexc-text-dim); margin-top: 25px; font-size: 1.1rem;">
+                ⚡ Instant delivery • 🔒 Secure payment • 💰 Crypto accepted
+            </p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-number">75%</div>
+                <div class="stat-label">Win Rate</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">120</div>
+                <div class="stat-label">Tokens Scanned</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Auto Trading</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">$10K+</div>
+                <div class="stat-label">User Profits</div>
+            </div>
+        </div>
+
+        <h2 class="section-header">🚀 What You Get</h2>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">Smart Entry Detection</div>
+                <p>Scans 120 tokens every minute. Only enters trades with confirmed momentum and volume.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <div class="feature-title">AI Momentum Analysis</div>
+                <p>Detects hesitation patterns in real-time. Lets winners run, exits weak pumps instantly.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <div class="feature-title">4-Zone Protection</div>
+                <p>Zone 1: Quick +0.8% • Zone 2: Trail runners • Zone 3: Tight stop • Zone 4: -0.7% stop loss</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <div class="feature-title">Manual Buy Tracking</div>
+                <p>Trade on mobile? Bot auto-detects and trails your positions with same smart logic.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Lightning Fast</div>
+                <p>5-second monitoring. Catches pumps instantly. Executes in milliseconds.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Secure & Private</div>
+                <p>Runs on YOUR computer. API keys never leave your machine. No cloud access.</p>
+            </div>
+        </div>
+
+        <h2 class="section-header">💬 What Traders Are Saying</h2>
+
+        <div class="testimonial">
+            <p>"Made $47 in the first 3 hours. Bot caught a PEPE pump I would've missed sleeping. Worth every penny!"</p>
+            <div class="testimonial-author">- Mike T., Day Trader</div>
+        </div>
+
+        <div class="testimonial">
+            <p>"Finally a bot that actually works. The momentum detection is insane - it held LRC from +0.8% to +2.37% while I was at work."</p>
+            <div class="testimonial-author">- Sarah K., Crypto Investor</div>
+        </div>
+
+        <div class="testimonial">
+            <p>"Tried 5 other bots before this. They all sucked. This one makes money. The zone system is genius."</p>
+            <div class="testimonial-author">- James L., Swing Trader</div>
+        </div>
+
+        <div style="text-align: center; margin: 80px 0;">
+            <h2 class="section-header">Ready to Start?</h2>
+            <button class="cta-button" onclick="openPaymentModal()">
+                GET YOUR BOT NOW - $500
+            </button>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closePaymentModal()">&times;</span>
+            <h2>🚀 Get Instant Access</h2>
+            
+            <div id="step1">
+                <label for="email" style="color: var(--mexc-text); font-weight: 600;">Enter your email for delivery:</label>
+                <input type="email" id="buyerEmail" placeholder="your.email@example.com" required>
+                
+                <div class="promo-input">
+                    <input type="text" id="promoCode" placeholder="Enter promo code (optional)">
+                    <button class="apply-promo" onclick="applyPromo()">APPLY</button>
+                </div>
+                
+                <div id="priceDisplay" style="text-align: center; margin: 25px 0;">
+                    <div style="font-size: 2.5rem; color: var(--mexc-green); font-weight: 800;">
+                        Total: $<span id="finalPrice">500</span> USDT
+                    </div>
+                    <div id="discountInfo" style="color: #ff6b6b; margin-top: 12px; font-size: 1.1rem;"></div>
+                </div>
+                
+                <div class="payment-steps">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        Send <strong id="payAmount">500 USDT</strong> (TRC20) to this address:
+                        <div class="wallet-address" id="walletAddress">TYour-Wallet-Address-Here</div>
+                        <button class="copy-button" onclick="copyAddress()">📋 COPY ADDRESS</button>
+                    </div>
+                    
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        After sending, enter your transaction hash:
+                        <input type="text" id="txHash" placeholder="Transaction hash (0x...)" style="margin-top: 12px;">
+                    </div>
+                    
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        Click verify to confirm payment and get instant access
+                    </div>
+                </div>
+                
+                <button class="cta-button" style="width: 100%; margin-top: 25px;" onclick="verifyPayment()">
+                    VERIFY PAYMENT & GET ACCESS
+                </button>
+                
+                <p style="text-align: center; color: var(--mexc-text-dim); margin-top: 25px; font-size: 0.95rem;">
+                    ⏱️ Delivery within 1-5 minutes after blockchain confirmation<br>
+                    🔒 Secure • Private • Instant
+                </p>
+            </div>
+
+            <div id="processingStep" style="display: none; text-align: center; padding: 50px;">
+                <div style="font-size: 4rem;">⏳</div>
+                <h3 style="color: var(--mexc-text); margin-top: 20px;">Verifying Payment...</h3>
+                <p style="color: var(--mexc-text-dim); margin-top: 20px;">Checking blockchain confirmation. This may take 1-5 minutes.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <span class="close-modal" onclick="closeSuccessModal()">&times;</span>
+            <div class="success-icon">🎉</div>
+            <h2>Payment Confirmed!</h2>
+            <p style="color: var(--mexc-green); font-size: 1.5rem; margin: 25px 0; font-weight: 700;">
+                Welcome to MEXC Pump Surfer!
+            </p>
+            
+            <div class="license-box">
+                <p style="color: var(--mexc-text-dim);">Your License Key:</p>
+                <div class="license-key" id="licenseKey">XXXX-XXXX-XXXX-XXXX</div>
+                <button class="copy-button" onclick="copyLicense()">📋 COPY LICENSE</button>
+            </div>
+            
+            <a href="#" class="download-button" id="downloadLink" download>
+                ⬇️ DOWNLOAD BOT (Windows)
+            </a>
+            <a href="#" class="download-button" id="downloadLinkMac" download>
+                ⬇️ DOWNLOAD BOT (Mac)
+            </a>
+            
+            <p style="color: var(--mexc-text-dim); margin-top: 35px;">
+                📧 Setup guide sent to <span id="confirmEmail" style="color: var(--mexc-green);"></span><br>
+                💬 Need help? Email: pumpsurfers@gmail.com
+            </p>
+        </div>
+    </div>
+
+    <footer>
+        <p style="font-size: 1.1rem;">© 2024 MEXC Pump Surfer. All rights reserved.</p>
+        <p style="margin-top: 25px; font-size: 0.95rem;">
+            <strong>Disclaimer:</strong> Trading cryptocurrency involves substantial risk. Past performance does not guarantee future results.
+            This bot is for educational purposes. You are responsible for your own trades.
+        </p>
+    </footer>
+
+    <script>
+        // Configuration
+        const WALLET_ADDRESS = "THg1CNKh9pmUBaKY4HBjmZgprJnv3LkhX2"; // Your MEXC TRC20 wallet
+        const BASE_PRICE = 500;
+        const API_ENDPOINT = "http://localhost:3000/api"; // Change to your server URL
+        
+        // Promo codes (managed by backend)
+        let currentPrice = BASE_PRICE;
+        let appliedPromo = null;
+        
+        // Open payment modal
+        function openPaymentModal() {
+            document.getElementById('paymentModal').classList.add('active');
+        }
+        
+        // Close payment modal
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+        
+        // Close success modal
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.remove('active');
+        }
+        
+        // Apply promo code
+        async function applyPromo() {
+            const code = document.getElementById('promoCode').value.toUpperCase();
+            const email = document.getElementById('buyerEmail').value;
+            
+            if (!email) {
+                alert('Please enter your email first');
+                return;
+            }
+            
+            if (!code) {
+                return;
+            }
+            
+            try {
+                // Validate with backend
+                const response = await fetch(`${API_ENDPOINT}/validate-promo`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ code, email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.valid) {
+                    appliedPromo = code;
+                    const discount = data.discount;
+                    currentPrice = BASE_PRICE * (1 - discount / 100);
+                    document.getElementById('finalPrice').textContent = currentPrice.toFixed(0);
+                    document.getElementById('payAmount').textContent = currentPrice.toFixed(0) + ' USDT';
+                    document.getElementById('discountInfo').textContent = `✅ ${discount}% discount applied! You save $${(BASE_PRICE - currentPrice).toFixed(0)}`;
+                    document.getElementById('discountInfo').style.color = 'var(--mexc-green)';
+                } else {
+                    document.getElementById('discountInfo').textContent = '❌ ' + data.error;
+                    document.getElementById('discountInfo').style.color = '#ff6b6b';
+                }
+            } catch (error) {
+                document.getElementById('discountInfo').textContent = '❌ Could not validate code';
+                document.getElementById('discountInfo').style.color = '#ff6b6b';
+            }
+        }
+        
+        // Copy wallet address
+        function copyAddress() {
+            navigator.clipboard.writeText(WALLET_ADDRESS);
+            alert('✅ Wallet address copied!');
+        }
+        
+        // Copy license key
+        function copyLicense() {
+            const license = document.getElementById('licenseKey').textContent;
+            navigator.clipboard.writeText(license);
+            alert('✅ License key copied!');
+        }
+        
+        // Verify payment
+        async function verifyPayment() {
+            const email = document.getElementById('buyerEmail').value;
+            const txHash = document.getElementById('txHash').value;
+            
+            if (!email || !txHash) {
+                alert('❌ Please enter your email and transaction hash');
+                return;
+            }
+            
+            if (!email.includes('@')) {
+                alert('❌ Please enter a valid email address');
+                return;
+            }
+            
+            // Show processing
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('processingStep').style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_ENDPOINT}/verify-payment`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email: email,
+                        txHash: txHash,
+                        amount: currentPrice,
+                        promoCode: appliedPromo
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccessModal(data.licenseKey, data.downloadUrl, data.downloadUrlMac, email);
+                } else {
+                    alert('❌ ' + data.error + '\n\nContact: pumpsurfers@gmail.com');
+                    document.getElementById('step1').style.display = 'block';
+                    document.getElementById('processingStep').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Connection error. Please contact support: pumpsurfers@gmail.com');
+                document.getElementById('step1').style.display = 'block';
+                document.getElementById('processingStep').style.display = 'none';
+            }
+        }
+        
+        // Show success modal
+        function showSuccessModal(licenseKey, downloadUrl, downloadUrlMac, email) {
+            document.getElementById('paymentModal').classList.remove('active');
+            document.getElementById('successModal').classList.add('active');
+            document.getElementById('licenseKey').textContent = licenseKey;
+            document.getElementById('downloadLink').href = downloadUrl;
+            document.getElementById('downloadLinkMac').href = downloadUrlMac;
+            document.getElementById('confirmEmail').textContent = email;
+        }
+        
+        // Initialize
+        document.getElementById('walletAddress').textContent = WALLET_ADDRESS;
+    </script>
+</body>
+</html>
