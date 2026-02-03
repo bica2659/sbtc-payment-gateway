@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Intelligent Systems • Self-Custodial Trading Intelligence</title>
+  <meta name="description" content="Downloadable, open-source, self-hosted trading bots. Full control. No custody. Real edge — real risk."/>
+ 
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ 
+  <!-- Tailwind + Custom Config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'mexc-green': '#00C087',
+            'mexc-green-dark': '#00A070',
+            'btc-orange': '#f7931a',
+            'burnt-orange': '#cc6600',
+            'dark-bg': '#0B0E11',
+            'card-bg': '#141B22',
+            'border-dark': '#1E2329',
+            'text-dim': '#848E9C',
+          },
+          fontFamily: {
+            mono: ['IBM Plex Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'glow-pulse': 'glowPulse 4s ease-in-out infinite',
+            shimmer: 'shimmer 6s infinite',
+          },
+          keyframes: {
+            glowPulse: {
+              '0%,100%': { boxShadow: '0 0 15px rgba(0,192,135,0.2)' },
+              '50%': { boxShadow: '0 0 35px rgba(0,192,135,0.5)' }
+            },
+            shimmer: {
+              '0%,100%': { transform: 'translateX(-100%)' },
+              '50%': { transform: 'translateX(100%)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background: #0B0E11;
+      background-image:
+        radial-gradient(circle at 15% 20%, rgba(0,192,135,0.03) 0%, transparent 50%),
+        radial-gradient(circle at 85% 70%, rgba(247,147,26,0.03) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+    .robot-bg {
+      position: fixed;
+      inset: 0;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" opacity="0.07"><path fill="%2300C087" d="M400 100 L500 300 L700 300 L550 450 L600 650 L400 550 L200 650 L250 450 L100 300 L300 300 Z"/></svg>') center / 1200px no-repeat;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body class="text-white font-sans min-h-screen relative overflow-x-hidden">
+  <div class="robot-bg"></div>
+  <!-- Hero -->
+  <header class="relative pt-24 pb-32 text-center border-b border-border-dark">
+    <div class="absolute inset-0 bg-gradient-to-b from-mexc-green/5 via-transparent to-transparent pointer-events-none"></div>
+   
+    <div class="container mx-auto px-6 relative z-10">
+      <div class="inline-block mb-6 px-6 py-2 rounded-full bg-mexc-green/10 border border-mexc-green/30 text-mexc-green font-mono font-semibold text-sm uppercase tracking-wider animate-glow-pulse">
+        SELF-CUSTODIAL • OPEN-SOURCE • YOUR KEYS
+      </div>
+     
+      <h1 class="text-5xl md:text-7xl font-bold font-mono tracking-tight mb-6 leading-tight">
+        <span class="text-mexc-green">INTELLIGENT</span><br/>
+        <span class="bg-gradient-to-r from-mexc-green via-btc-orange to-mexc-green bg-clip-text text-transparent">SYSTEMS</span>
+      </h1>
+     
+      <p class="text-xl md:text-2xl text-text-dim max-w-3xl mx-auto mb-12">
+        Downloadable trading intelligence you host yourself.<br/>
+        No middleman. No custody. No illusions.<br/>
+        <span class="italic text-mexc-green">"It's a tool — not a money printer."</span>
+      </p>
+      <div class="flex flex-col md:flex-row gap-8 justify-center items-center max-w-6xl mx-auto">
+        <!-- Lite Card -->
+        <div class="w-full md:w-4/12 bg-card-bg border-2 border-gray-500 rounded-2xl p-8 md:p-10 shadow-2xl hover:shadow-[0_0_60px_rgba(130,142,156,0.3)] transition-all duration-500 group">
+          <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">🌊</div>
+          <h3 class="text-4xl font-bold text-gray-300 mb-4">PUMP SURFER LITE</h3>
+          <p class="text-lg text-text-dim mb-8">
+            Free V36 momentum surfer.<br/>
+            Test the waters with 4 hours daily runtime.
+          </p>
+          <div class="text-5xl font-black text-gray-300 mb-4">FREE</div>
+          <a href="#pricing" class="block bg-gradient-to-r from-gray-600 to-gray-700 text-white font-bold text-xl uppercase py-5 px-10 rounded-xl hover:brightness-110 hover:scale-105 transition-all">
+            GET LITE FREE
+          </a>
+        </div>
+        <!-- Sniper Card -->
+        <div class="w-full md:w-4/12 bg-card-bg border-2 border-mexc-green rounded-2xl p-8 md:p-10 shadow-2xl hover:shadow-[0_0_60px_rgba(0,192,135,0.3)] transition-all duration-500 group">
+          <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">🎯</div>
+          <h3 class="text-4xl font-bold text-mexc-green mb-4">SNIPER</h3>
+          <p class="text-lg text-text-dim mb-8">
+            High-conviction momentum & breakout entries.<br/>
+            Built to hunt in bull conviction phases.
+          </p>
+          <div class="text-5xl font-black text-mexc-green mb-4">$249</div>
+          <a href="#pricing" class="block bg-gradient-to-r from-mexc-green to-mexc-green-dark text-black font-bold text-xl uppercase py-5 px-10 rounded-xl hover:brightness-110 hover:scale-105 transition-all">
+            GET SNIPER LIFETIME
+          </a>
+        </div>
+        <!-- Fortress Card -->
+        <div class="w-full md:w-4/12 bg-card-bg border-2 border-btc-orange rounded-2xl p-8 md:p-10 shadow-2xl hover:shadow-[0_0_60px_rgba(247,147,26,0.3)] transition-all duration-500 group">
+          <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">🏰</div>
+          <h3 class="text-4xl font-bold text-btc-orange mb-4">FORTRESS</h3>
+          <p class="text-lg text-text-dim mb-8">
+            Defensive volatility harvesting & regime protection.<br/>
+            Built to survive — and harvest — in bear & chop.
+          </p>
+          <div class="text-5xl font-black text-btc-orange mb-4">$249</div>
+          <a href="#pricing" class="block bg-gradient-to-r from-btc-orange to-burnt-orange text-black font-bold text-xl uppercase py-5 px-10 rounded-xl hover:brightness-110 hover:scale-105 transition-all">
+            GET FORTRESS LIFETIME
+          </a>
+        </div>
+      </div>
+      <div class="mt-16 text-center">
+        <p class="text-2xl font-bold text-mexc-green mb-4">Bundle Sniper + Fortress → $399 <span class="text-text-dim text-xl">(save $99)</span></p>
+        <p class="text-lg text-text-dim">First three of a growing suite of intelligent, self-custodial trading systems.</p>
+      </div>
+    </div>
+  </header>
+  <!-- Why Self-Custodial -->
+  <section class="py-24 bg-black/40">
+    <div class="container mx-auto px-6 max-w-5xl">
+      <h2 class="text-5xl md:text-6xl font-bold font-mono text-center mb-16 bg-gradient-to-r from-mexc-green via-btc-orange to-mexc-green bg-clip-text text-transparent">
+        WHY SELF-CUSTODIAL?
+      </h2>
+      <div class="grid md:grid-cols-3 gap-10">
+        <div class="bg-card-bg border border-border-dark rounded-2xl p-10 text-center hover:border-mexc-green transition-colors">
+          <div class="text-6xl mb-6">🔑</div>
+          <h3 class="text-3xl font-bold text-mexc-green mb-4">You Control Everything</h3>
+          <p class="text-text-dim text-lg">Your keys, your server, your risk. No third-party custody. Ever.</p>
+        </div>
+        <div class="bg-card-bg border border-border-dark rounded-2xl p-10 text-center hover:border-btc-orange transition-colors">
+          <div class="text-6xl mb-6">📜</div>
+          <h3 class="text-3xl font-bold text-btc-orange mb-4">100% Open-Source</h3>
+          <p class="text-text-dim text-lg">Audit, modify, fork, improve. The code is yours forever.</p>
+        </div>
+        <div class="bg-card-bg border border-border-dark rounded-2xl p-10 text-center hover:border-mexc-green transition-colors">
+          <div class="text-6xl mb-6">⚠️</div>
+          <h3 class="text-3xl font-bold text-mexc-green mb-4">No False Promises</h3>
+          <p class="text-text-dim text-lg">Crypto is brutal. These are tools — not guaranteed money printers.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Pricing -->
+  <section id="pricing" class="py-24 bg-gradient-to-b from-black via-card-bg to-black">
+    <div class="container mx-auto px-6">
+      <h2 class="text-5xl md:text-6xl font-bold font-mono text-center text-mexc-green mb-6">
+        ONE-TIME LIFETIME ACCESS
+      </h2>
+      <p class="text-xl text-text-dim text-center max-w-3xl mx-auto mb-16">
+        Pay once. Own forever. Run locally or on your VPS.<br/>
+        No subscriptions. No usage limits. Just code + future major updates.<br/>
+        <span class="text-sm text-gray-500">All editions include 0.025% micro-fee on profitable sells (0.5x MEXC taker rate).</span>
+      </p>
+      <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <!-- Lite -->
+        <div class="bg-card-bg border-2 border-gray-500 rounded-2xl p-10 relative overflow-hidden group hover:shadow-[0_0_50px_rgba(130,142,156,0.3)] transition-all">
+          <div class="absolute -top-10 -right-10 text-9xl opacity-10 text-gray-500">🌊</div>
+          <h3 class="text-4xl font-bold text-gray-300 mb-3">PUMP SURFER LITE</h3>
+          <p class="text-text-dim mb-8">V36 free edition — test momentum surfing with daily cap.</p>
+          <div class="text-6xl font-black text-gray-300 mb-8">FREE</div>
+          <a href="https://your-download-link" class="block bg-gradient-to-r from-gray-600 to-gray-700 text-white font-bold text-xl uppercase py-5 px-10 rounded-xl text-center hover:brightness-110 hover:scale-105 transition-all">
+            DOWNLOAD LITE
+          </a>
+          <p class="mt-4 text-sm text-text-dim">4 hours daily runtime • Full V36 core • No card needed</p>
+        </div>
+        <!-- Sniper -->
+        <div class="bg-card-bg border-2 border-mexc-green rounded-2xl p-10 relative overflow-hidden group hover:shadow-[0_0_50px_rgba(0,192,135,0.3)] transition-all">
+          <div class="absolute -top-10 -right-10 text-9xl opacity-10 text-mexc-green">🎯</div>
+          <h3 class="text-4xl font-bold text-mexc-green mb-3">SNIPER</h3>
+          <p class="text-text-dim mb-8">Bull-regime momentum sniper</p>
+          <div class="text-6xl font-black text-mexc-green mb-8">$249</div>
+          <a href="https://buy.stripe.com/your-sniper-link" class="block bg-mexc-green text-black font-bold text-xl uppercase py-5 px-10 rounded-xl text-center hover:brightness-110 hover:scale-105 transition-all">
+            BUY SNIPER
+          </a>
+          <p class="mt-4 text-sm text-text-dim">Unlimited runtime • Advanced ML + correlation</p>
+        </div>
+        <!-- Fortress -->
+        <div class="bg-card-bg border-2 border-btc-orange rounded-2xl p-10 relative overflow-hidden group hover:shadow-[0_0_50px_rgba(247,147,26,0.3)] transition-all">
+          <div class="absolute -top-10 -right-10 text-9xl opacity-10 text-btc-orange">🏰</div>
+          <h3 class="text-4xl font-bold text-btc-orange mb-3">FORTRESS</h3>
+          <p class="text-text-dim mb-8">Bear/chop volatility fortress</p>
+          <div class="text-6xl font-black text-btc-orange mb-8">$249</div>
+          <a href="https://buy.stripe.com/your-fortress-link" class="block bg-gradient-to-r from-btc-orange to-burnt-orange text-black font-bold text-xl uppercase py-5 px-10 rounded-xl text-center hover:brightness-110 hover:scale-105 transition-all">
+            BUY FORTRESS
+          </a>
+          <p class="mt-4 text-sm text-text-dim">Unlimited runtime • Storm riding + regime protection</p>
+        </div>
+      </div>
+      <div class="mt-16 text-center">
+        <p class="text-3xl font-bold text-mexc-green mb-4">Bundle Sniper + Fortress → $399 <span class="text-text-dim text-xl">(save $99)</span></p>
+        <a href="https://buy.stripe.com/your-bundle-link" class="inline-block bg-gradient-to-r from-mexc-green to-btc-orange text-black font-bold text-xl uppercase py-5 px-12 rounded-xl hover:brightness-110 hover:scale-105 transition-all">
+          GET THE BUNDLE
+        </a>
+        <p class="mt-4 text-lg text-text-dim">Unlock both for complete regime coverage — bull hunts + bear harvests.</p>
+      </div>
+    </div>
+  </section>
+  <!-- Strong Disclaimer -->
+  <section class="py-20 bg-black/80">
+    <div class="container mx-auto px-6 max-w-4xl">
+      <div class="bg-gradient-to-r from-red-950/30 to-black border-2 border-red-600/50 rounded-2xl p-12 text-center">
+        <h3 class="text-4xl font-bold text-red-500 mb-8 uppercase tracking-wide">⚠️ CRITICAL DISCLAIMER</h3>
+        <div class="text-lg text-gray-300 leading-relaxed space-y-6 max-w-3xl mx-auto">
+          <p>These are <strong>open-source tools</strong> — not financial advice, not managed services, not profit guarantees.</p>
+          <p>Cryptocurrency trading involves extreme risk of total loss of capital.</p>
+          <p>Past performance (screenshots, backtests, testimonials) does not predict future results.</p>
+          <p>You run these bots on your own hardware with your own keys and funds.</p>
+          <p>We provide no hosting, no execution, no custody, no ongoing support after purchase.</p>
+          <p class="text-2xl font-bold text-red-400 mt-10">USE AT YOUR OWN RISK.<br/>CHECK YOUR LOCAL LAWS.<br/>TRADE RESPONSIBLY — OR DON'T TRADE AT ALL.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Coming Next -->
+  <section class="py-20 bg-gradient-to-b from-black to-card-bg">
+    <div class="container mx-auto px-6 text-center">
+      <h2 class="text-5xl font-bold font-mono text-btc-orange mb-8">MORE INTELLIGENCE COMING</h2>
+      <p class="text-xl text-text-dim max-w-3xl mx-auto">
+        Sniper, Fortress, and Pump Surfer Lite are just the beginning.<br/>
+        Future systems will target new regimes, new chains, new edges — all self-custodial, all downloadable.
+      </p>
+    </div>
+  </section>
+  <!-- Footer -->
+  <footer class="bg-black border-t border-border-dark py-16 text-center text-text-dim">
+    <p class="text-lg mb-4">© 2026 Bica 🔶 • All tools fully open-source • Self-custodial by design</p>
+    <p class="text-sm">
+      Built with inspiration from <a href="https://onchain-crossrealm.netlify.app" class="text-mexc-green hover:underline">CrossRealm</a><br/>
+      Follow development: <a href="https://x.com/bicaAde" class="text-btc-orange hover:underline">@bicaAde</a>
+    </p>
+  </footer>
+</body>
+</html>
