@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Intelligent Systems • Self-Custodial Trading Tools</title>
+  <meta name="description" content="Downloadable, open-source trading bots you host yourself. Full control. No custody. Real risk, real edge."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'btc-orange': '#f7931a',
+            'burnt-orange': '#cc6600',
+            'core-green': '#00ff88',
+            'core-green-dark': '#00cc6a',
+            'card-bg': '#1a1a1a',
+            'dark-bg': '#0f0f0f',
+          },
+          fontFamily: {
+            mono: ['IBM Plex Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            shimmer: 'shimmer 3s infinite',
+          },
+          keyframes: {
+            shimmer: {
+              '0%,100%': { transform: 'translateX(-100%)' },
+              '50%':    { transform: 'translateX(100%)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-dark-bg text-gray-200 font-sans min-h-screen">
+
+  <!-- Hero -->
+  <header class="relative overflow-hidden border-b-2 border-btc-orange bg-gradient-to-b from-black/80 to-dark-bg pb-16 pt-20 text-center">
+    <div class="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(247,147,26,0.04)_2px,rgba(247,147,26,0.04)_4px)]"></div>
+    <div class="relative z-10 container mx-auto px-6">
+      <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-btc-orange uppercase mb-4 animate-pulse">
+        INTELLIGENT SYSTEMS
+      </h1>
+      <p class="text-xl md:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto">
+        Self-custodial trading intelligence you <span class="text-core-green font-semibold">download • host • control</span>.<br/>
+        No middleman. No promises. Just tools — and the risk is yours.
+      </p>
+
+      <div class="flex flex-col md:flex-row gap-8 justify-center items-center">
+        <!-- Bot 1 Card -->
+        <div class="w-full max-w-sm bg-card-bg border-2 border-btc-orange rounded-xl p-8 shadow-2xl hover:shadow-[0_0_40px_rgba(247,147,26,0.4)] transition-all duration-300">
+          <div class="text-6xl mb-4">🎯</div>
+          <h3 class="text-3xl font-bold text-btc-orange mb-3">SNIPER</h3>
+          <p class="text-gray-300 mb-6">Precision entries in momentum & breakout regimes. Built for bull conviction.</p>
+          <div class="text-sm text-gray-500 mb-6">Lifetime access • Open-source • Self-hosted</div>
+          <a href="#pricing" class="block bg-gradient-to-r from-btc-orange to-burnt-orange text-black font-bold uppercase py-4 px-8 rounded-lg hover:brightness-110 transition">
+            GET SNIPER — $249
+          </a>
+        </div>
+
+        <!-- Bot 2 Card -->
+        <div class="w-full max-w-sm bg-card-bg border-2 border-core-green rounded-xl p-8 shadow-2xl hover:shadow-[0_0_40px_rgba(0,255,136,0.4)] transition-all duration-300">
+          <div class="text-6xl mb-4">🏰</div>
+          <h3 class="text-3xl font-bold text-core-green mb-3">FORTRESS</h3>
+          <p class="text-gray-300 mb-6">Defensive harvesting in chop & bear. Survives when others bleed.</p>
+          <div class="text-sm text-gray-500 mb-6">Lifetime access • Open-source • Self-hosted</div>
+          <a href="#pricing" class="block bg-gradient-to-r from-core-green to-core-green-dark text-black font-bold uppercase py-4 px-8 rounded-lg hover:brightness-110 transition">
+            GET FORTRESS — $249
+          </a>
+        </div>
+      </div>
+
+      <p class="mt-12 text-lg text-gray-500">
+        First two of many intelligent systems coming. Built for traders who understand:<br/>
+        <span class="italic text-btc-orange">"It's a tool — not a money printer."</span>
+      </p>
+    </div>
+  </header>
+
+  <!-- Why Self-Custodial -->
+  <section class="py-20 bg-black/40">
+    <div class="container mx-auto px-6 max-w-5xl">
+      <h2 class="text-4xl md:text-5xl font-bold text-center text-btc-orange mb-12 uppercase tracking-wide">
+        Why Self-Custodial?
+      </h2>
+      <div class="grid md:grid-cols-3 gap-8 text-center">
+        <div class="bg-card-bg border border-gray-700 rounded-xl p-8">
+          <div class="text-5xl mb-4">🔑</div>
+          <h3 class="text-2xl font-bold text-core-green mb-4">You Hold the Keys</h3>
+          <p class="text-gray-400">No third-party custody. Your API keys, your funds, your risk.</p>
+        </div>
+        <div class="bg-card-bg border border-gray-700 rounded-xl p-8">
+          <div class="text-5xl mb-4">⚡</div>
+          <h3 class="text-2xl font-bold text-btc-orange mb-4">Full Transparency</h3>
+          <p class="text-gray-400">100% open-source. Audit, modify, fork — it's yours.</p>
+        </div>
+        <div class="bg-card-bg border border-gray-700 rounded-xl p-8">
+          <div class="text-5xl mb-4">🛡️</div>
+          <h3 class="text-2xl font-bold text-core-green mb-4">No False Promises</h3>
+          <p class="text-gray-400">Crypto is brutal. These are tools — not magic money machines.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="py-20 bg-gradient-to-b from-black to-dark-bg">
+    <div class="container mx-auto px-6">
+      <h2 class="text-4xl md:text-5xl font-bold text-center text-core-green mb-4 uppercase">
+        One-Time Lifetime Access
+      </h2>
+      <p class="text-center text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
+        Pay once. Own forever. Run on your server, your VPS, your machine.<br/>
+        No subscriptions. No usage caps. Just code + updates when we drop them.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+        <!-- Sniper -->
+        <div class="bg-card-bg border-2 border-btc-orange rounded-2xl p-10 shadow-2xl relative overflow-hidden">
+          <div class="absolute top-0 right-0 bg-btc-orange text-black text-xs font-bold uppercase px-4 py-1 rounded-bl-lg">
+            Bull Regime
+          </div>
+          <h3 class="text-4xl font-bold text-btc-orange mb-2">SNIPER</h3>
+          <p class="text-gray-400 mb-6 text-lg">High-conviction momentum & breakout entries</p>
+          <ul class="text-gray-300 space-y-3 mb-8">
+            <li>✓ Open-source Python codebase</li>
+            <li>✓ Pre-tuned configs + presets</li>
+            <li>✓ Detailed setup & risk guide</li>
+            <li>✓ Lifetime updates (major versions)</li>
+            <li>✗ No managed hosting</li>
+          </ul>
+          <div class="text-5xl font-bold text-center mb-6">$249<span class="text-xl text-gray-500"> one-time</span></div>
+          <a href="https://your-gumroad-link.com/l/sniper" class="block bg-gradient-to-r from-btc-orange to-burnt-orange text-black font-bold text-xl uppercase py-5 px-10 rounded-xl text-center hover:brightness-110 transition">
+            BUY SNIPER NOW
+          </a>
+        </div>
+
+        <!-- Fortress -->
+        <div class="bg-card-bg border-2 border-core-green rounded-2xl p-10 shadow-2xl relative overflow-hidden">
+          <div class="absolute top-0 right-0 bg-core-green text-black text-xs font-bold uppercase px-4 py-1 rounded-bl-lg">
+            Bear / Chop Regime
+          </div>
+          <h3 class="text-4xl font-bold text-core-green mb-2">FORTRESS</h3>
+          <p class="text-gray-400 mb-6 text-lg">Defensive volatility harvesting & regime-aware protection</p>
+          <ul class="text-gray-300 space-y-3 mb-8">
+            <li>✓ Open-source Python codebase</li>
+            <li>✓ Pre-tuned configs + presets</li>
+            <li>✓ Detailed setup & risk guide</li>
+            <li>✓ Lifetime updates (major versions)</li>
+            <li>✗ No managed hosting</li>
+          </ul>
+          <div class="text-5xl font-bold text-center mb-6">$249<span class="text-xl text-gray-500"> one-time</span></div>
+          <a href="https://your-gumroad-link.com/l/fortress" class="block bg-gradient-to-r from-core-green to-core-green-dark text-black font-bold text-xl uppercase py-5 px-10 rounded-xl text-center hover:brightness-110 transition">
+            BUY FORTRESS NOW
+          </a>
+        </div>
+      </div>
+
+      <div class="text-center mt-16">
+        <p class="text-2xl font-bold text-btc-orange mb-4">Bundle Both → $399</p>
+        <p class="text-gray-400">(Save $99 • Get both sniper + fortress)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Coming Next Teaser -->
+  <section class="py-20 bg-black/60">
+    <div class="container mx-auto px-6 text-center">
+      <h2 class="text-4xl md:text-5xl font-bold text-btc-orange mb-6 uppercase">
+        More Intelligence Coming
+      </h2>
+      <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+        These are just the first two.<br/>
+        Future systems will expand into new regimes, new chains, new risk profiles.<br/>
+        All self-custodial. All downloadable. All yours.
+      </p>
+      <div class="mt-12 text-lg text-gray-500 italic">
+        "It's a tool — not a money printer."
+      </div>
+    </div>
+  </section>
+
+  <!-- Strong Disclaimer -->
+  <section class="py-16 bg-gradient-to-r from-red-950/40 to-black">
+    <div class="container mx-auto px-6 max-w-4xl">
+      <div class="bg-black/80 border-2 border-red-600 rounded-2xl p-10 text-center">
+        <h3 class="text-3xl font-bold text-red-500 mb-6 uppercase">⚠️ Critical Disclaimer</h3>
+        <p class="text-gray-300 text-lg leading-relaxed mb-6">
+          These are <strong>open-source tools</strong> — not investment advice, not managed services, not guaranteed profit machines.<br/><br/>
+          Cryptocurrency trading carries extreme risk of total capital loss.<br/>
+          Past performance (backtests, screenshots, testimonials) does not predict future results.<br/><br/>
+          You run these bots on your own hardware/servers with your own keys and funds.<br/>
+          We provide no hosting, no execution, no custody, no support after purchase.<br/><br/>
+          <strong>Use at your own risk. Check your local laws. Trade responsibly — or don't trade at all.</strong>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-black border-t border-gray-800 py-12 text-center text-gray-500">
+    <p class="mb-4">© 2026 Bica 🔶 • All tools fully open-source • Self-custodial by design</p>
+    <p class="text-sm">
+      Built with inspiration from <a href="https://onchain-crossrealm.netlify.app" class="text-btc-orange hover:underline">CrossRealm</a><br/>
+      Questions? Reach out on X: <a href="https://x.com/bicaAde" class="text-core-green hover:underline">@bicaAde</a>
+    </p>
+  </footer>
+
+</body>
+</html>
