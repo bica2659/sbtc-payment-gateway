@@ -1,0 +1,421 @@
+
+<style>
+.spinning { animation: spin 0.9s linear infinite; display:inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+select, input, textarea { box-sizing: border-box; }
+</style>
+
+<h2 class="sr-only">Sunville Developers daily wage bill entry — submit site labour records to Google Sheets</h2>
+
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+const {useState,useEffect,useCallback} = React;
+
+const SITES = ["ALEXANDRITE","AMBER","AMETHYST","AQUAMARINE","BERYL","BLACK OPAL","CITRINE","CORAL","GARNET HEIGHTS","HAMERGITE","HESSONITE 1","JADE 1","JADE 2","MOONSTONE","OASIS SPRING","PRIME COURT 1","PRIME COURT 2","PRIME COURT 3","PRIME COURT 4","RUBELLITE","SUNSTONE","TANZANITE","TURQUOISE","ZIRCON"];
+const DESIGS = ["Labour","Mason","Carpenter","Aboki","Plumber","Electrician","Welder","Painter","Tiler","Scaffolder","Other"];
+const G = "#1F6E43"; const GL = "#E8F5E9"; const GD = "#155232";
+const fmt = n => (!n||isNaN(n)) ? "0" : Math.round(Number(n)).toLocaleString("en-NG");
+const today = () => new Date().toISOString().split("T")[0];
+const mkItem = () => ({id:Date.now()+Math.random()*999|0, work:"", desig:"Labour", workers:"", rate:"", amt:"", transfer:false, from:""});
+
+const SCRIPT = `// Sunville Developers — Daily Wage Bill Receiver
+// 1. Open your Google Sheet → Extensions → Apps Script
+// 2. Replace any existing code with this script
+// 3. Deploy → New Deployment → Web app
+//    Execute as: Me | Who can access: Anyone
+// 4. Copy the deployment URL into the app settings
+
+function doPost(e) {
+  try {
+    var d = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var log = ss.getSheetByName("WAGE BILLS LOG");
+    if (!log) {
+      log = ss.insertSheet("WAGE BILLS LOG");
+      var h = ["Timestamp","Site","Bill Date","Supervisor",
+               "S/N","Work Description","Designation",
+               "Workers","Rate (N)","Amount (N)",
+               "Transfer?","Transfer From","Notes","Status"];
+      log.appendRow(h);
+      log.getRange(1,1,1,h.length)
+         .setBackground("#1F6E43").setFontColor("white").setFontWeight("bold");
+      log.setFrozenRows(1);
+    }
+    var ts = new Date().toISOString();
+    d.items.forEach(function(item, i) {
+      log.appendRow([
+        ts, d.site, d.date, d.supervisor,
+        i+1, item.work, item.desig,
+        Number(item.workers)||"",
+        Number(item.rate)||"",
+        Number(item.amt)||0,
+        item.transfer ? "YES" : "",
+        item.transfer ? (item.from||"") : "",
+        i===0 ? (d.notes||"") : "",
+        "PENDING"
+      ]);
+    });
+    // summary row
+    log.appendRow([ts,d.site,d.date,d.supervisor,
+                   "","★ TOTAL","","","",
+                   Number(d.total)||0,"","","",""]);
+    SpreadsheetApp.flush();
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:true}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:false,error:err.message}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+function doGet() {
+  return ContentService
+    .createTextOutput(JSON.stringify({status:"Wage Bill API active"}))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+function App() {
+  const [tab, setTab] = useState("form");
+  const [form, setForm] = useState({site:"", date:today(), supervisor:"", notes:""});
+  const [items, setItems] = useState([mkItem()]);
+  const [entries, setEntries] = useState([]);
+  const [url, setUrl] = useState("");
+  const [toast, setToast] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [exp, setExp] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(()=>{
+    (async()=>{
+      try{const r=await window.storage.get("wbe");if(r)setEntries(JSON.parse(r.value));}catch(_){}
+      try{const c=await window.storage.get("wbc");if(c){const d=JSON.parse(c.value);setUrl(d.url||"");}}catch(_){}
+      setLoading(false);
+    })();
+  },[]);
+
+  const showToast = (msg,err)=>{ setToast({msg,err}); setTimeout(()=>setToast(null),3500); };
+  const total = items.reduce((s,i)=>s+(parseFloat(i.amt)||0),0);
+
+  const updItem = (id,k,v) => setItems(prev=>prev.map(item=>{
+    if(item.id!==id) return item;
+    const u={...item,[k]:v};
+    if(k==="workers"||k==="rate"){
+      const w=parseFloat(k==="workers"?v:item.workers)||0;
+      const r=parseFloat(k==="rate"?v:item.rate)||0;
+      u.amt = (w&&r) ? String(Math.round(w*r)) : "";
+    }
+    return u;
+  }));
+
+  const submit = async()=>{
+    if(!form.site||!form.date||!form.supervisor) return showToast("Fill site, date and supervisor",true);
+    if(items.some(i=>!i.work.trim())) return showToast("All work descriptions required",true);
+    setBusy(true);
+    const entry={id:Date.now(),...form,items:items.map(({id,...r})=>r),total,at:new Date().toISOString(),status:"local"};
+    if(url){
+      try{
+        await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(entry)});
+        entry.status="sent";
+      }catch(_){}
+    }
+    const next=[entry,...entries];
+    setEntries(next);
+    try{await window.storage.set("wbe",JSON.stringify(next));}catch(_){}
+    setBusy(false);
+    showToast(entry.status==="sent"?"Submitted to Google Sheets ✓":"Saved — add Sheets URL to auto-sync");
+    setForm({site:"",date:today(),supervisor:"",notes:""});
+    setItems([mkItem()]);
+  };
+
+  const retryAll = async()=>{
+    if(!url) return showToast("Set Sheets URL in Settings first",true);
+    let sent=0;
+    const updated=await Promise.all(entries.map(async e=>{
+      if(e.status==="sent") return e;
+      try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(e)});sent++;return{...e,status:"sent"};}
+      catch{return e;}
+    }));
+    setEntries(updated);
+    try{await window.storage.set("wbe",JSON.stringify(updated));}catch(_){}
+    showToast(`${sent} entr${sent===1?"y":"ies"} synced to Sheets`);
+  };
+
+  const saveConfig = async()=>{
+    try{await window.storage.set("wbc",JSON.stringify({url}));showToast("Settings saved");}
+    catch(_){showToast("Save failed",true);}
+  };
+
+  const clearLog = async()=>{
+    setEntries([]);
+    try{await window.storage.delete("wbe");}catch(_){}
+    showToast("Log cleared");
+  };
+
+  const inputStyle = {width:"100%",padding:"9px 11px",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",fontSize:13,background:"var(--color-background-primary)",color:"var(--color-text-primary)",boxSizing:"border-box"};
+  const labelStyle = {fontSize:11,color:"var(--color-text-secondary)",textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:4};
+  const cardStyle = {background:"var(--color-background-primary)",borderRadius:"var(--border-radius-lg)",border:"0.5px solid var(--color-border-tertiary)",padding:"12px 14px",marginBottom:10};
+
+  if(loading) return React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",minHeight:200,color:"var(--color-text-secondary)",fontSize:13}},"Loading…");
+
+  return React.createElement("div",{style:{background:"var(--color-background-tertiary)",minHeight:500}},
+
+    // Toast
+    toast && React.createElement("div",{style:{
+      background:toast.err?"var(--color-background-danger)":G,
+      color:toast.err?"var(--color-text-danger)":"white",
+      padding:"9px 16px",fontSize:13,fontWeight:500,textAlign:"center",
+      borderBottom:`0.5px solid ${toast.err?"var(--color-border-danger)":GD}`
+    }},toast.msg),
+
+    // Header
+    React.createElement("div",{style:{background:G,padding:"14px 16px 12px"}},
+      React.createElement("p",{style:{color:"rgba(255,255,255,0.6)",fontSize:10,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 3px"}},"Sunville Developers"),
+      React.createElement("h1",{style:{color:"white",fontSize:17,fontWeight:500,margin:0}},
+        tab==="form"?"Daily wage bill":tab==="log"?`Submissions (${entries.length})`:"Settings"
+      )
+    ),
+
+    // Tab bar
+    React.createElement("div",{style:{display:"flex",background:"var(--color-background-primary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}},
+      [["form","file","Form"],["log","list","Log"],["settings","settings","Settings"]].map(([t,ic,lb])=>
+        React.createElement("button",{key:t,onClick:()=>setTab(t),style:{
+          flex:1,padding:"10px 4px",fontSize:12,fontWeight:tab===t?500:400,
+          color:tab===t?G:"var(--color-text-secondary)",
+          borderBottom:`2px solid ${tab===t?G:"transparent"}`,
+          background:"none",border:"none",borderBottom:`2px solid ${tab===t?G:"transparent"}`,
+          display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:"pointer"
+        }},
+          React.createElement("i",{className:`ti ti-${ic}`,style:{fontSize:18},["aria-hidden"]:"true"}),
+          lb
+        )
+      )
+    ),
+
+    // ===== FORM =====
+    tab==="form" && React.createElement("div",{style:{padding:"12px 16px 24px"}},
+
+      // Header card
+      React.createElement("div",{style:cardStyle},
+        React.createElement("div",{style:{marginBottom:10}},
+          React.createElement("label",{style:labelStyle},"Site location"),
+          React.createElement("select",{value:form.site,onChange:e=>setForm({...form,site:e.target.value}),style:{...inputStyle,appearance:"none"}},
+            React.createElement("option",{value:""},"— Select site —"),
+            ...SITES.map(s=>React.createElement("option",{key:s,value:s},s))
+          )
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+          React.createElement("div",null,
+            React.createElement("label",{style:labelStyle},"Date"),
+            React.createElement("input",{type:"date",value:form.date,onChange:e=>setForm({...form,date:e.target.value}),style:inputStyle})
+          ),
+          React.createElement("div",null,
+            React.createElement("label",{style:labelStyle},"Supervisor"),
+            React.createElement("input",{type:"text",placeholder:"Name",value:form.supervisor,onChange:e=>setForm({...form,supervisor:e.target.value}),style:inputStyle})
+          )
+        )
+      ),
+
+      // Items header
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+        React.createElement("span",{style:{fontSize:12,fontWeight:500,color:"var(--color-text-primary)"}},"Work items"),
+        React.createElement("span",{style:{fontSize:11,color:"var(--color-text-secondary)"}},`${items.length} item${items.length!==1?"s":""}`)
+      ),
+
+      // Item cards
+      ...items.map((item,idx)=>
+        React.createElement("div",{key:item.id,style:{...cardStyle,position:"relative"}},
+          // Row 1: number + desc + delete
+          React.createElement("div",{style:{display:"flex",alignItems:"flex-start",gap:8,marginBottom:8}},
+            React.createElement("div",{style:{background:GL,color:G,borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:500,flexShrink:0,marginTop:7}},idx+1),
+            React.createElement("input",{type:"text",placeholder:"Work description",value:item.work,onChange:e=>updItem(item.id,"work",e.target.value),style:{...inputStyle,flex:1}}),
+            items.length>1 && React.createElement("button",{onClick:()=>setItems(p=>p.filter(i=>i.id!==item.id)),style:{color:"var(--color-text-danger)",background:"none",border:"none",padding:"4px",flexShrink:0,marginTop:4,cursor:"pointer"}},
+              React.createElement("i",{className:"ti ti-trash",style:{fontSize:16},["aria-hidden"]:"true"})
+            )
+          ),
+          // Row 2: desig + workers
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
+            React.createElement("div",null,
+              React.createElement("label",{style:labelStyle},"Designation"),
+              React.createElement("select",{value:item.desig,onChange:e=>updItem(item.id,"desig",e.target.value),style:{...inputStyle,fontSize:12}},
+                ...DESIGS.map(d=>React.createElement("option",{key:d,value:d},d))
+              )
+            ),
+            React.createElement("div",null,
+              React.createElement("label",{style:labelStyle},"No. workers"),
+              React.createElement("input",{type:"number",placeholder:"e.g. 4",value:item.workers,onChange:e=>updItem(item.id,"workers",e.target.value),style:{...inputStyle,fontSize:13}})
+            )
+          ),
+          // Row 3: rate + amount
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
+            React.createElement("div",null,
+              React.createElement("label",{style:labelStyle},"Rate (₦ per worker)"),
+              React.createElement("input",{type:"number",placeholder:"0",value:item.rate,onChange:e=>updItem(item.id,"rate",e.target.value),style:{...inputStyle,fontSize:13}})
+            ),
+            React.createElement("div",null,
+              React.createElement("label",{style:labelStyle},"Amount (₦)"),
+              React.createElement("input",{type:"number",placeholder:"auto",value:item.amt,onChange:e=>updItem(item.id,"amt",e.target.value),
+                style:{...inputStyle,fontSize:13,background:item.amt?"var(--color-background-success)":"var(--color-background-primary)"}})
+            )
+          ),
+          // Transfer toggle
+          React.createElement("button",{onClick:()=>updItem(item.id,"transfer",!item.transfer),style:{
+            width:"100%",fontSize:12,padding:"7px 10px",
+            borderRadius:"var(--border-radius-md)",
+            background:item.transfer?GL:"var(--color-background-secondary)",
+            color:item.transfer?G:"var(--color-text-secondary)",
+            border:`0.5px solid ${item.transfer?G:"var(--color-border-secondary)"}`,
+            cursor:"pointer",display:"flex",alignItems:"center",gap:6
+          }},
+            React.createElement("i",{className:"ti ti-arrow-right",["aria-hidden"]:"true"}),
+            item.transfer?"Inter-site transfer (tap to clear)":"Flag as inter-site transfer"
+          ),
+          item.transfer && React.createElement("div",{style:{marginTop:8}},
+            React.createElement("label",{style:{...labelStyle,color:G}},"Transfer FROM site"),
+            React.createElement("select",{value:item.from,onChange:e=>updItem(item.id,"from",e.target.value),
+              style:{...inputStyle,border:`0.5px solid ${G}`}},
+              React.createElement("option",{value:""},"— Select source site —"),
+              ...SITES.filter(s=>s!==form.site).map(s=>React.createElement("option",{key:s,value:s},s))
+            )
+          )
+        )
+      ),
+
+      // Add item
+      React.createElement("button",{onClick:()=>setItems(p=>[...p,mkItem()]),style:{
+        width:"100%",padding:"11px",borderRadius:"var(--border-radius-md)",
+        background:GL,color:G,border:`0.5px solid ${G}`,fontSize:13,fontWeight:500,
+        display:"flex",alignItems:"center",justifyContent:"center",gap:6,cursor:"pointer",marginBottom:10
+      }},
+        React.createElement("i",{className:"ti ti-plus",["aria-hidden"]:"true"})," Add work item"
+      ),
+
+      // Notes
+      React.createElement("div",{style:cardStyle},
+        React.createElement("label",{style:labelStyle},"Notes (optional)"),
+        React.createElement("textarea",{value:form.notes,onChange:e=>setForm({...form,notes:e.target.value}),placeholder:"Additional remarks…",rows:2,style:{...inputStyle,resize:"none"}})
+      ),
+
+      // Total
+      React.createElement("div",{style:{background:G,borderRadius:"var(--border-radius-lg)",padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+        React.createElement("span",{style:{color:"rgba(255,255,255,0.7)",fontSize:12,textTransform:"uppercase",letterSpacing:"0.1em"}},"Daily total"),
+        React.createElement("span",{style:{color:"white",fontSize:26,fontWeight:500,fontFamily:"var(--font-mono)"}},`₦${fmt(total)}`)
+      ),
+
+      // Submit
+      React.createElement("button",{onClick:submit,disabled:busy,style:{
+        width:"100%",padding:"14px",borderRadius:"var(--border-radius-lg)",
+        background:G,color:"white",border:"none",fontSize:14,fontWeight:500,
+        display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+        opacity:busy?0.7:1,cursor:busy?"default":"pointer"
+      }},
+        busy
+          ? [React.createElement("i",{key:"s",className:"ti ti-refresh spinning",["aria-hidden"]:"true"})," Submitting…"]
+          : [React.createElement("i",{key:"s",className:"ti ti-send",["aria-hidden"]:"true"})," Submit wage bill"]
+      )
+    ),
+
+    // ===== LOG =====
+    tab==="log" && React.createElement("div",{style:{padding:"12px 16px 24px"}},
+      entries.length===0
+        ? React.createElement("div",{style:{textAlign:"center",padding:"48px 0"}},
+            React.createElement("i",{className:"ti ti-clipboard-list",style:{fontSize:40,color:"var(--color-text-tertiary)"},["aria-hidden"]:"true"}),
+            React.createElement("p",{style:{color:"var(--color-text-secondary)",fontSize:14,marginTop:12}},"No submissions yet"),
+            React.createElement("p",{style:{color:"var(--color-text-tertiary)",fontSize:12}},"Submitted wage bills will appear here")
+          )
+        : React.createElement("div",null,
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+              React.createElement("span",{style:{fontSize:12,color:"var(--color-text-secondary)"}},`${entries.length} submission${entries.length!==1?"s":""}`),
+              React.createElement("button",{onClick:clearLog,style:{fontSize:12,color:"var(--color-text-danger)",background:"none",border:"none",cursor:"pointer"}},"Clear all")
+            ),
+            ...entries.map(e=>
+              React.createElement("div",{key:e.id,style:{background:"var(--color-background-primary)",borderRadius:"var(--border-radius-lg)",border:"0.5px solid var(--color-border-tertiary)",marginBottom:8,overflow:"hidden"}},
+                React.createElement("button",{onClick:()=>setExp(exp===e.id?null:e.id),style:{width:"100%",padding:"12px 14px",textAlign:"left",background:"none",border:"none",cursor:"pointer"}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between"}},
+                    React.createElement("div",{style:{flex:1}},
+                      React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:4}},
+                        React.createElement("span",{style:{background:GL,color:G,borderRadius:"var(--border-radius-md)",padding:"2px 8px",fontSize:11,fontWeight:500}},e.site),
+                        React.createElement("span",{style:{
+                          background:e.status==="sent"?"var(--color-background-success)":"var(--color-background-warning)",
+                          color:e.status==="sent"?"var(--color-text-success)":"var(--color-text-warning)",
+                          borderRadius:"var(--border-radius-md)",padding:"2px 8px",fontSize:11,fontWeight:500
+                        }},e.status==="sent"?"Synced":"Local")
+                      ),
+                      React.createElement("p",{style:{fontSize:13,fontWeight:500,color:"var(--color-text-primary)",margin:"0 0 2px"}},e.supervisor),
+                      React.createElement("p",{style:{fontSize:11,color:"var(--color-text-secondary)",margin:0}},`${e.date} · ${e.items.length} item${e.items.length!==1?"s":""}`)
+                    ),
+                    React.createElement("div",{style:{textAlign:"right",marginLeft:12}},
+                      React.createElement("p",{style:{fontSize:18,fontWeight:500,color:G,fontFamily:"var(--font-mono)",margin:"0 0 4px"}},`₦${fmt(e.total)}`),
+                      React.createElement("i",{className:`ti ti-chevron-${exp===e.id?"up":"down"}`,style:{fontSize:13,color:"var(--color-text-tertiary)"},["aria-hidden"]:"true"})
+                    )
+                  )
+                ),
+                exp===e.id && React.createElement("div",{style:{borderTop:"0.5px solid var(--color-border-tertiary)",padding:"10px 14px"}},
+                  ...e.items.map((item,i)=>
+                    React.createElement("div",{key:i,style:{background:"var(--color-background-secondary)",borderRadius:"var(--border-radius-md)",padding:"8px 10px",marginBottom:5}},
+                      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
+                        React.createElement("div",{style:{flex:1}},
+                          React.createElement("p",{style:{fontSize:12,fontWeight:500,color:"var(--color-text-primary)",margin:"0 0 2px"}},item.work),
+                          React.createElement("p",{style:{fontSize:11,color:"var(--color-text-secondary)",margin:0}},`${item.desig}${item.workers?` · ${item.workers} workers`:""}${item.rate?` · ₦${fmt(item.rate)}`+"/worker":""}`),
+                          item.transfer && React.createElement("p",{style:{fontSize:11,color:G,margin:"2px 0 0",fontWeight:500}},`⇄ from ${item.from||"unknown"}`)
+                        ),
+                        React.createElement("span",{style:{fontSize:13,fontWeight:500,color:G,fontFamily:"var(--font-mono)",marginLeft:8}},`₦${fmt(item.amt)}`)
+                      )
+                    )
+                  ),
+                  e.notes && React.createElement("p",{style:{fontSize:11,color:"var(--color-text-tertiary)",fontStyle:"italic",marginTop:6}},`"${e.notes}"`)
+                )
+              )
+            )
+          )
+    ),
+
+    // ===== SETTINGS =====
+    tab==="settings" && React.createElement("div",{style:{padding:"12px 16px 24px"}},
+
+      React.createElement("div",{style:cardStyle},
+        React.createElement("h2",{style:{fontSize:14,fontWeight:500,margin:"0 0 4px"}},"Google Sheets integration"),
+        React.createElement("p",{style:{fontSize:12,color:"var(--color-text-secondary)",margin:"0 0 12px"}},"Deploy the Apps Script below as a web app, paste the URL here, and all wage bill submissions will sync to a WAGE BILLS LOG sheet in your tracker automatically."),
+        React.createElement("label",{style:labelStyle},"Apps Script web app URL"),
+        React.createElement("input",{type:"url",value:url,onChange:e=>setUrl(e.target.value),placeholder:"https://script.google.com/macros/s/…",style:{...inputStyle,marginBottom:10,fontSize:12}}),
+        React.createElement("button",{onClick:saveConfig,style:{width:"100%",padding:"10px",background:G,color:"white",border:"none",borderRadius:"var(--border-radius-md)",fontSize:13,fontWeight:500,cursor:"pointer"}},"Save settings")
+      ),
+
+      entries.filter(e=>e.status!=="sent").length>0 && React.createElement("div",{style:cardStyle},
+        React.createElement("h2",{style:{fontSize:14,fontWeight:500,margin:"0 0 4px"}},"Pending sync"),
+        React.createElement("p",{style:{fontSize:12,color:"var(--color-text-secondary)",margin:"0 0 10px"}},`${entries.filter(e=>e.status!=="sent").length} local entr${entries.filter(e=>e.status!=="sent").length===1?"y":"ies"} waiting to sync to Google Sheets.`),
+        React.createElement("button",{onClick:retryAll,style:{width:"100%",padding:"10px",background:GL,color:G,border:`0.5px solid ${G}`,borderRadius:"var(--border-radius-md)",fontSize:13,fontWeight:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
+          React.createElement("i",{className:"ti ti-refresh",["aria-hidden"]:"true"})," Retry all unsynced"
+        )
+      ),
+
+      React.createElement("div",{style:cardStyle},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}},
+          React.createElement("h2",{style:{fontSize:14,fontWeight:500,margin:0}},"Apps Script code"),
+          React.createElement("button",{onClick:()=>{try{navigator.clipboard.writeText(SCRIPT);}catch(_){}setCopied(true);setTimeout(()=>setCopied(false),2000);},
+            style:{background:copied?GL:"var(--color-background-secondary)",color:copied?G:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",padding:"5px 10px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:4}},
+            React.createElement("i",{className:`ti ti-${copied?"check":"copy"}`,style:{fontSize:13,color:copied?G:undefined},["aria-hidden"]:"true"}),
+            copied?"Copied":"Copy"
+          )
+        ),
+        React.createElement("ol",{style:{fontSize:11,color:"var(--color-text-secondary)",margin:"0 0 10px",paddingLeft:18,lineHeight:1.8}},
+          React.createElement("li",null,"Open your Google Sheet → Extensions → Apps Script"),
+          React.createElement("li",null,"Paste this code, replacing any existing content"),
+          React.createElement("li",null,"Deploy → New Deployment → Web app"),
+          React.createElement("li",null,"Execute as: Me  |  Access: Anyone"),
+          React.createElement("li",null,"Copy the URL into the field above and save")
+        ),
+        React.createElement("div",{style:{background:"#16181c",borderRadius:"var(--border-radius-md)",padding:"12px",maxHeight:240,overflowY:"auto"}},
+          React.createElement("pre",{style:{margin:0,fontSize:10,color:"#a8b4c8",fontFamily:"var(--font-mono)",whiteSpace:"pre-wrap",wordBreak:"break-word",lineHeight:1.55}},SCRIPT)
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.render(React.createElement(App), document.getElementById("root"));
+</script>
