@@ -1,67 +1,309 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quality Cost Tracker — Makurai Ziko</title>
 <style>
-.spinning { animation: spin 0.9s linear infinite; display:inline-block; }
-@keyframes spin { to { transform: rotate(360deg); } }
-select, input, textarea { box-sizing: border-box; }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --nav:#1A3352;--nav2:#0f1f34;--amb:#E8A020;--ambl:#FEF3C7;
+  --bg:#F2F5FA;--card:#fff;--bdr:#DDE3ED;
+  --tx:#1E293B;--tx2:#64748B;--tx3:#94A3B8;
+  --grn:#15803D;--grnl:#DCFCE7;--grn2:#16A34A;
+  --wrn:#B45309;--wrnl:#FEF3C7;
+  --red:#B91C1C;--redl:#FEE2E2;
+  --rad:10px;--rad2:6px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+     background:var(--bg);color:var(--tx);font-size:13px;line-height:1.45}
+select,input,textarea{font-family:inherit;font-size:13px;color:var(--tx)}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:2px}
 </style>
-
-<h2 class="sr-only">Sunville Developers daily wage bill entry — submit site labour records to Google Sheets</h2>
-
+</head>
+<body>
 <div id="root"></div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script>
-const {useState,useEffect,useCallback} = React;
+const {useState,useEffect,useCallback,useMemo}=React;
+const e=React.createElement;
 
-const SITES = ["ALEXANDRITE","AMBER","AMETHYST","AQUAMARINE","BERYL","BLACK OPAL","CITRINE","CORAL","GARNET HEIGHTS","HAMERGITE","HESSONITE 1","JADE 1","JADE 2","MOONSTONE","OASIS SPRING","PRIME COURT 1","PRIME COURT 2","PRIME COURT 3","PRIME COURT 4","RUBELLITE","SUNSTONE","TANZANITE","TURQUOISE","ZIRCON"];
-const DESIGS = ["Labour","Mason","Carpenter","Aboki","Plumber","Electrician","Welder","Painter","Tiler","Scaffolder","Other"];
-const G = "#1F6E43"; const GL = "#E8F5E9"; const GD = "#155232";
-const fmt = n => (!n||isNaN(n)) ? "0" : Math.round(Number(n)).toLocaleString("en-NG");
-const today = () => new Date().toISOString().split("T")[0];
-const mkItem = () => ({id:Date.now()+Math.random()*999|0, work:"", desig:"Labour", workers:"", rate:"", amt:"", transfer:false, from:""});
+// ── Palette shortcuts ──────────────────────────────────────────────────────
+const C={
+  nav:"#1A3352",nav2:"#0f1f34",amb:"#E8A020",ambl:"#FFFBEB",
+  bg:"#F2F5FA",card:"#fff",bdr:"#DDE3ED",
+  tx:"#1E293B",tx2:"#64748B",tx3:"#94A3B8",
+  grn:"#15803D",grnl:"#DCFCE7",grn2:"#16A34A",
+  wrn:"#B45309",wrnl:"#FEF9EF",
+  red:"#B91C1C",redl:"#FEE2E2",
+};
 
-const SCRIPT = `// Sunville Developers — Daily Wage Bill Receiver
+// ── Helpers ────────────────────────────────────────────────────────────────
+const fmt = n=>(!n&&n!==0)?"":(Number(n)||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtShort = n=>{const v=Number(n)||0;return v>=1e9?(v/1e9).toFixed(2)+"B":v>=1e6?(v/1e6).toFixed(2)+"M":v>=1e3?(v/1e3).toFixed(0)+"K":v.toFixed(0)};
+const today=()=>new Date().toISOString().split("T")[0];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+const pct=(a,b)=>b>0?Math.min((a/b)*100,999):0;
+const pctColor=p=>p>=100?C.red:p>=80?C.wrn:C.grn2;
+const pctBg=p=>p>=100?C.redl:p>=80?C.wrnl:C.grnl;
+
+// ── BOQ Data ───────────────────────────────────────────────────────────────
+const BOQ={
+PRELIM:{code:"A",label:"Preliminaries",budget:8400000,items:[
+  {ref:"A",desc:"Site investigation & soil test report",unit:"Lot",budget:350000},
+  {ref:"B",desc:"Setting out of building & handing over benchmarks",unit:"Lot",budget:150000},
+  {ref:"C",desc:"Temporary site fence & security hut",unit:"Lot",budget:550000},
+  {ref:"D",desc:"Site office, stores & sanitation facilities",unit:"Lot",budget:600000},
+  {ref:"E",desc:"Water supply for construction purposes",unit:"Lot",budget:250000},
+  {ref:"F",desc:"Electricity / generator hire & fuel",unit:"Lot",budget:450000},
+  {ref:"G",desc:"Plant, equipment & small tools",unit:"Lot",budget:800000},
+  {ref:"H",desc:"Hoarding & protection of works",unit:"Lot",budget:300000},
+  {ref:"J",desc:"Watching & lighting of works",unit:"Lot",budget:200000},
+  {ref:"K",desc:"Site clearing, cleaning & removal of debris on completion",unit:"Lot",budget:350000},
+  {ref:"L",desc:"Overheads, profit & attendance on NSC",unit:"Lot",budget:2000000},
+  {ref:"M",desc:"Performance bond (P.S.)",unit:"P.S.",budget:500000},
+  {ref:"N",desc:"Insurance of works & third-party liability (P.S.)",unit:"P.S.",budget:400000},
+  {ref:"P",desc:"Contingency allowance 3% (P.S.)",unit:"P.S.",budget:1500000},
+]},
+SUBST:{code:"B",label:"Substructure",budget:43046281.98,items:[
+  {ref:"A",desc:"Excavate oversite; topsoil 150–200mm; main building",qty:244,unit:"m²",rate:300,budget:73200},
+  {ref:"B",desc:"Excavate raft beam trenches; 900×1000mm; girth 135m",qty:121.5,unit:"m³",rate:2500,budget:303750},
+  {ref:"C",desc:"Remove excavated material from site",qty:101,unit:"m³",rate:2500,budget:252500},
+  {ref:"D",desc:"Level & compact bottom of excavations",qty:244,unit:"m²",rate:350,budget:85400},
+  {ref:"E",desc:"Anti-termite treatment (Dieldrix) to formation & trenches",qty:444,unit:"m²",rate:1048,budget:465312},
+  {ref:"F",desc:"Plain in-situ concrete 1:4:8; 50mm blinding",qty:11.75,unit:"m³",rate:155064,budget:1822002},
+  {ref:"G",desc:"1000-gauge polythene DPM waterproofing membrane",qty:244,unit:"m²",rate:550,budget:134200},
+  {ref:"H",desc:"RC raft slab 1:2:4; 175mm thick; main building",qty:43,unit:"m³",rate:192774,budget:8289282},
+  {ref:"J",desc:"RC raft ground beams 250×1025mm; girth 135m",qty:36.18,unit:"m³",rate:196094,budget:7094680.92},
+  {ref:"K",desc:"Formwork to vertical sides of raft beams",qty:322,unit:"m²",rate:8850,budget:2849700},
+  {ref:"L",desc:"Y12 @ 175mm c/c T&B in raft slab; 3001kg",qty:3001,unit:"kg",rate:1450,budget:4351450},
+  {ref:"M",desc:"Raft beam bar reinforcement all diameters; 3116kg",qty:3116,unit:"kg",rate:1450,budget:4518200},
+  {ref:"N",desc:"Excavate oversite — BQ (Boys' Quarters)",qty:87.8,unit:"m²",rate:300,budget:26340},
+  {ref:"O",desc:"Excavate raft beam trenches BQ; girth 79m",qty:71.1,unit:"m³",rate:2500,budget:177750},
+  {ref:"P",desc:"Remove excavated material from site — BQ",qty:89,unit:"m³",rate:2500,budget:222500},
+  {ref:"Q",desc:"Level & compact formation — BQ",qty:87.8,unit:"m²",rate:350,budget:30730},
+  {ref:"R",desc:"Anti-termite treatment — BQ",qty:230,unit:"m²",rate:1048,budget:241040},
+  {ref:"S",desc:"Blinding concrete 1:4:8 — BQ",qty:5.08,unit:"m³",rate:155064,budget:787725.12},
+  {ref:"T",desc:"DPM membrane — BQ",qty:87.8,unit:"m²",rate:550,budget:48290},
+  {ref:"U",desc:"RC raft slab 175mm — BQ",qty:15.37,unit:"m³",rate:192774,budget:2962936.38},
+  {ref:"V",desc:"RC raft beams 175×850mm BQ; girth 79m",qty:11.74,unit:"m³",rate:196094,budget:2302143.56},
+  {ref:"W",desc:"Formwork to BQ raft beam sides",qty:192,unit:"m²",rate:8850,budget:1699200},
+  {ref:"X",desc:"Bar reinforcement BQ raft beams; 1526kg",qty:1526,unit:"kg",rate:1450,budget:2212700},
+  {ref:"Y",desc:"Y12 T&B in BQ raft slab; 1445kg",qty:1445,unit:"kg",rate:1450,budget:2095250},
+]},
+FRAMES:{code:"C",label:"Frames",budget:12078586.36,items:[
+  {ref:"A",desc:"RC columns C1; 225×225mm; 24No.; GF to FF; 8m³",qty:8,unit:"m³",rate:192774,budget:1542192},
+  {ref:"B",desc:"Formwork to 2 vertical faces of C1 columns",qty:71.28,unit:"m²",rate:8850,budget:630828},
+  {ref:"C",desc:"Y16 in C1 columns; 1031kg",qty:1031,unit:"kg",rate:1450,budget:1494950},
+  {ref:"D",desc:"R08 links @125mm c/c in C1 columns; 296kg",qty:296,unit:"kg",rate:1450,budget:429200},
+  {ref:"E",desc:"RC columns C2; 150×400mm; 3No.; 1.14m³",qty:1.14,unit:"m³",rate:192774,budget:219762.36},
+  {ref:"F",desc:"Formwork to 2 faces of C2 columns",qty:22.68,unit:"m²",rate:8850,budget:200718},
+  {ref:"G",desc:"Y16 in C2 columns; 197kg",qty:197,unit:"kg",rate:1450,budget:285650},
+  {ref:"H",desc:"R08 links in C2; 37kg",qty:37,unit:"kg",rate:1450,budget:53650},
+  {ref:"J",desc:"RC first floor beams 225×450mm; girth 136m; 14m³",qty:14,unit:"m³",rate:192774,budget:2698836},
+  {ref:"K",desc:"Formwork to soffits & sides of FF beams",qty:224,unit:"m²",rate:8850,budget:1982400},
+  {ref:"L",desc:"Y16 main bars in FF beams; 1318kg",qty:1318,unit:"kg",rate:1450,budget:1911100},
+  {ref:"M",desc:"Y10 links @200mm c/c in FF beams; 434kg",qty:434,unit:"kg",rate:1450,budget:629300},
+]},
+UPPER:{code:"D",label:"Upper Floors",budget:13793681.96,items:[
+  {ref:"A",desc:"RC suspended slab 175mm; first floor level; 33.29m³",qty:33.29,unit:"m³",rate:192774,budget:6417446.46},
+  {ref:"B",desc:"Formwork to soffit of FF suspended slab; 190.23m²",qty:190.23,unit:"m²",rate:8850,budget:1683535.5},
+  {ref:"C",desc:"Y12 @ 175mm c/c T&B in FF slab; 3926kg",qty:3926,unit:"kg",rate:1450,budget:5692700},
+]},
+STAIRS:{code:"E",label:"Staircases",budget:1273798.94,items:[
+  {ref:"A",desc:"RC staircase flights; 150mm waist; 2 flights; 1.24m³",qty:1.24,unit:"m³",rate:192774,budget:239039.76},
+  {ref:"B",desc:"RC stair mid-landing; 150mm thick; 0.32m³",qty:0.32,unit:"m³",rate:192774,budget:61687.68},
+  {ref:"C",desc:"Formwork to soffits of flights (sloping)",qty:8.27,unit:"m²",rate:8850,budget:73189.5},
+  {ref:"D",desc:"Formwork to soffit of landing (horizontal)",qty:2.16,unit:"m²",rate:8850,budget:19116},
+  {ref:"E",desc:"Formwork to risers; 22No.",qty:3.96,unit:"m²",rate:8850,budget:35046},
+  {ref:"F",desc:"Y12 in staircase waist & landings; 400kg",qty:400,unit:"kg",rate:1450,budget:580000},
+  {ref:"G",desc:"Y10 distribution bars in mid-landing; 80kg",qty:80,unit:"kg",rate:1450,budget:116000},
+  {ref:"H",desc:"30mm cement/sand screed to stair landings; 12m²",qty:12,unit:"m²",rate:3500,budget:42000},
+  {ref:"J",desc:"12mm screed to treads; 22No.; 7.92m²",qty:7.92,unit:"m²",rate:3500,budget:27720},
+  {ref:"K",desc:"Allow for protection of staircase during construction (P.S.)",unit:"Item",budget:80000},
+]},
+WALLS:{code:"F",label:"Walls",budget:14322429.5,items:[
+  {ref:"A",desc:"RC lintels 225×150mm; total run 71.83m; 4m³",qty:4,unit:"m³",rate:192774,budget:771096},
+  {ref:"B",desc:"Formwork to sides & soffit of lintels",qty:37.71,unit:"m²",rate:8850,budget:333733.5},
+  {ref:"C",desc:"Y12 + R06 links in lintels; 530kg",qty:530,unit:"kg",rate:1450,budget:768500},
+  {ref:"D",desc:"225mm sandcrete blockwork — GF external walls; 146m²",qty:146,unit:"m²",rate:17515,budget:2557190},
+  {ref:"E",desc:"225mm sandcrete blockwork — GF internal partitions; 118m²",qty:118,unit:"m²",rate:17515,budget:2066770},
+  {ref:"F",desc:"225mm sandcrete blockwork — FF external walls; 155m²",qty:155,unit:"m²",rate:18020,budget:2793100},
+  {ref:"G",desc:"225mm sandcrete blockwork — FF internal partitions; 90m²",qty:90,unit:"m²",rate:18020,budget:1621800},
+  {ref:"H",desc:"225mm sandcrete blockwork — parapet wall at roof level; 18m²",qty:18,unit:"m²",rate:18200,budget:327600},
+  {ref:"J",desc:"225mm sandcrete blockwork — BQ all walls; 176m²",qty:176,unit:"m²",rate:17515,budget:3082640},
+]},
+ROOF:{code:"G",label:"Roofing",budget:9873400,items:[
+  {ref:"A",desc:"75×50mm sawn hardwood purlins; 350m",qty:350,unit:"m",rate:1050,budget:367500},
+  {ref:"B",desc:"150×50mm sawn hardwood rafters; 200m",qty:200,unit:"m",rate:1600,budget:320000},
+  {ref:"C",desc:"100×50mm sawn hardwood struts; 310m",qty:310,unit:"m",rate:1350,budget:418500},
+  {ref:"D",desc:"150×50mm tie beams & wall plates; 255m",qty:255,unit:"m",rate:1950,budget:497250},
+  {ref:"E",desc:"50×50mm sawn hardwood noggins; 840m",qty:840,unit:"m",rate:750,budget:630000},
+  {ref:"F",desc:"0.55mm longspan aluminium roofing sheets; 275m²",qty:275,unit:"m²",rate:15000,budget:4125000},
+  {ref:"G",desc:"Aluminium ridge, hip & valley flashing; 30m",qty:30,unit:"m",rate:4000,budget:120000},
+  {ref:"H",desc:"4mm bitumen felt (Scudo-plast) to parapet upstands; 25m²",qty:25,unit:"m²",rate:8500,budget:212500},
+  {ref:"J",desc:"75×50mm purlins — BQ; 170m",qty:170,unit:"m",rate:1050,budget:178500},
+  {ref:"K",desc:"150×50mm rafters — BQ; 115m",qty:115,unit:"m",rate:1600,budget:184000},
+  {ref:"L",desc:"100×50mm struts — BQ; 151m",qty:151,unit:"m",rate:1350,budget:203850},
+  {ref:"M",desc:"150×50mm wall plate — BQ; 124m",qty:124,unit:"m",rate:1950,budget:241800},
+  {ref:"N",desc:"50×50mm noggins — BQ; 410m",qty:410,unit:"m",rate:750,budget:307500},
+  {ref:"O",desc:"0.55mm longspan aluminium sheets — BQ; 133m²",qty:133,unit:"m²",rate:15000,budget:1995000},
+  {ref:"P",desc:"Ridge/hip aluminium flashing — BQ; 18m",qty:18,unit:"m",rate:4000,budget:72000},
+]},
+INSITU:{code:"H",label:"In-Situ Finishes",budget:12270500,items:[
+  {ref:"A",desc:"50mm screeded bed 1:4 to Ground Floor; 190m²",qty:190,unit:"m²",rate:7610,budget:1445900},
+  {ref:"B",desc:"50mm screeded bed 1:4 to First Floor; 190m²",qty:190,unit:"m²",rate:7910,budget:1502900},
+  {ref:"C",desc:"12mm cement/sand 1:3 rendering — all walls internal & external; 1370m²",qty:1370,unit:"m²",rate:6310,budget:8644700},
+  {ref:"D",desc:"12mm floated backing to wet areas (bathrooms, kitchen); 100m²",qty:100,unit:"m²",rate:6770,budget:677000},
+]},
+WINDOWS:{code:"J",label:"Windows",budget:3131000,items:[
+  {ref:"A",desc:"W1 — 900×1200mm aluminium casement; clear glaze; 21No.",qty:21,unit:"No.",rate:95000,budget:1995000},
+  {ref:"B",desc:"W2 — 675×1200mm aluminium casement; 2No.",qty:2,unit:"No.",rate:80000,budget:160000},
+  {ref:"C",desc:"W3 — 600×600mm aluminium casement; 6No.",qty:6,unit:"No.",rate:40000,budget:240000},
+  {ref:"D",desc:"W4 — 2400×2445mm aluminium fixed louvre window; 2No.",qty:2,unit:"No.",rate:280000,budget:560000},
+  {ref:"E",desc:"W5 — 2400×1800mm aluminium fixed panel window; 2No.",qty:2,unit:"No.",rate:88000,budget:176000},
+]},
+DOORS:{code:"K",label:"Doors & Ironmongery",budget:5580000,items:[
+  {ref:"A",desc:"D1 — 1200×2100mm double leaf steel security door; 1No.",qty:1,unit:"No.",rate:600000,budget:600000},
+  {ref:"B",desc:"D2 — 900×2100mm hardwood flush door; 6No.",qty:6,unit:"No.",rate:380000,budget:2280000},
+  {ref:"C",desc:"D3 — 750×2100mm hardwood flush door; 6No.",qty:6,unit:"No.",rate:300000,budget:1800000},
+  {ref:"D",desc:"W4(alt) — 1500×2100mm aluminium sliding door; 2No.",qty:2,unit:"No.",rate:450000,budget:900000},
+]},
+FLOOR:{code:"L",label:"Floor & Ceiling Finishes",budget:22606000,items:[
+  {ref:"A",desc:"600×600×12mm vitrified floor tiles — Ground Floor; 190m²",qty:190,unit:"m²",rate:24000,budget:4560000},
+  {ref:"B",desc:"600×600×12mm vitrified floor tiles — First Floor; 190m²",qty:190,unit:"m²",rate:24000,budget:4560000},
+  {ref:"C",desc:"600×600×12mm vitrified floor tiles — BQ all floors; 88m²",qty:88,unit:"m²",rate:22000,budget:1936000},
+  {ref:"D",desc:"100mm tile skirting; same as floor; 400m",qty:400,unit:"m",rate:1200,budget:480000},
+  {ref:"E",desc:"Staircase tiles — landings, treads & risers; 60m²",qty:60,unit:"m²",rate:62000,budget:3720000},
+  {ref:"F",desc:"300×600×6mm ceramic wall tiles — bathrooms, WC, kitchen; 100m²",qty:100,unit:"m²",rate:17500,budget:1750000},
+  {ref:"G",desc:"12mm POP suspended ceiling; timber framework; cornices; 350m²",qty:350,unit:"m²",rate:16000,budget:5600000},
+]},
+FITTINGS:{code:"M",label:"Fittings & Fixtures",budget:7560000,items:[
+  {ref:"A",desc:"Fitted wardrobes — all bedrooms (P.S., subject to client confirmation)",unit:"P.S.",budget:3000000},
+  {ref:"B",desc:"Kitchen cabinets with marble/granite countertops (P.S.)",unit:"P.S.",budget:4000000},
+  {ref:"C",desc:"Stainless steel staircase balustrade & handrail; 16m",qty:16,unit:"m",rate:35000,budget:560000},
+]},
+PAINT:{code:"N",label:"Painting & Decorating",budget:8074000,items:[
+  {ref:"A",desc:"Emulsion painting to walls — internal & external; all floors; 1370m²",qty:1370,unit:"m²",rate:2500,budget:3425000},
+  {ref:"B",desc:"Emulsion painting to soffits of slabs & ceilings; 380m²",qty:380,unit:"m²",rate:2500,budget:950000},
+  {ref:"C",desc:"POP skim coat to internal & external wall surfaces; 1370m²",qty:1370,unit:"m²",rate:2700,budget:3699000},
+]},
+EXTERN:{code:"P",label:"External Works",budget:20291000,items:[
+  {ref:"A",desc:"80mm interlocking block paving — car park & driveway; 110m²",qty:110,unit:"m²",rate:10500,budget:1155000},
+  {ref:"B",desc:"60mm interlocking block paving — walkways & pedestrian areas; 80m²",qty:80,unit:"m²",rate:8500,budget:680000},
+  {ref:"C",desc:"100mm plain concrete pavement — porch, apron & steps; 40m²",qty:40,unit:"m²",rate:12500,budget:500000},
+  {ref:"D",desc:"150mm sandcrete boundary fence wall; plastered & washed; 128m",qty:128,unit:"m",rate:52000,budget:6656000},
+  {ref:"E",desc:"Double leaf motorised/manual vehicular security gate; complete",qty:1,unit:"No.",rate:1000000,budget:1000000},
+  {ref:"F",desc:"Gatehouse — complete construction (P.S.)",unit:"P.S.",budget:6000000},
+  {ref:"G",desc:"Landscaping, turfing, tree planting; 450m² free space",qty:1,unit:"Sum",rate:1200000,budget:1200000},
+  {ref:"H",desc:"Brick/block inspection chambers 450×450mm; 900mm deep; 5No.",qty:5,unit:"No.",rate:150000,budget:750000},
+  {ref:"J",desc:"RC septic tank 3000L; complete with access covers & pipes",qty:1,unit:"No.",rate:1200000,budget:1200000},
+  {ref:"K",desc:"Soak away pit 3000mm dia × 3000mm deep; granite rubble filled",qty:1,unit:"No.",rate:750000,budget:750000},
+  {ref:"L",desc:"External uPVC drainage connections; trenching, pipes, backfill",qty:1,unit:"Sum",rate:400000,budget:400000},
+]},
+ELEC:{code:"Q",label:"Electrical",budget:10487500,items:[
+  {ref:"A",desc:"200A TPN main distribution board; Legrand/Schneider; complete",qty:1,unit:"No.",rate:520000,budget:520000},
+  {ref:"B",desc:"TPN NEPA/PHCN prepaid maximum demand meter with box",qty:1,unit:"No.",rate:260000,budget:260000},
+  {ref:"C",desc:"60A sub-distribution board — FF/BQ; complete with MCBs",qty:1,unit:"No.",rate:245000,budget:245000},
+  {ref:"D",desc:"200A changeover switch manual/automatic; complete",qty:1,unit:"No.",rate:650000,budget:650000},
+  {ref:"E",desc:"Complete earthing system; copper earth rod, conductor & bar",qty:1,unit:"Lot",rate:420000,budget:420000},
+  {ref:"F",desc:"Lighting circuit points 1.5mm² T&E in conduit; ceiling rose & switch; 45No.",qty:45,unit:"No.",rate:16500,budget:742500},
+  {ref:"G",desc:"2-gang 10A switches surface/flush mounted; MK; 26No.",qty:26,unit:"No.",rate:4500,budget:117000},
+  {ref:"H",desc:"18W LED recessed ceiling luminaires; 32No.",qty:32,unit:"No.",rate:15500,budget:496000},
+  {ref:"J",desc:"900mm ceiling fans with speed regulator; 12No.",qty:12,unit:"No.",rate:42000,budget:504000},
+  {ref:"K",desc:"External security floodlight 100W LED; 13No.",qty:13,unit:"No.",rate:18000,budget:234000},
+  {ref:"L",desc:"13A twin switched socket outlets 2.5mm² T&E; MK; 30No.",qty:30,unit:"No.",rate:21000,budget:630000},
+  {ref:"M",desc:"15A switched socket outlets for AC units 4mm² T&E; 10No.",qty:10,unit:"No.",rate:24000,budget:240000},
+  {ref:"N",desc:"20A DP isolator switches for AC units flush mounted; 10No.",qty:10,unit:"No.",rate:7500,budget:75000},
+  {ref:"O",desc:"Smoke/heat detectors; addressable type; 12No.",qty:12,unit:"No.",rate:42000,budget:504000},
+  {ref:"P",desc:"Fire alarm system — control panel, sounders, break-glass (P.S.)",unit:"Lot",budget:1100000},
+  {ref:"Q",desc:"CCTV system — 4 cameras, DVR, monitor (P.S.)",unit:"Lot",budget:950000},
+  {ref:"R",desc:"BQ complete electrical installation (P.S.)",unit:"Lot",budget:2000000},
+  {ref:"S",desc:"Sundry electrical materials & accessories",unit:"Lot",budget:800000},
+]},
+MECH:{code:"R",label:"Mechanical & Plumbing",budget:14154000,items:[
+  {ref:"A",desc:"Close-coupled WC suite; cistern, seat & cover; 5No.",qty:5,unit:"No.",rate:175000,budget:875000},
+  {ref:"B",desc:"Wash hand basin on pedestal; mixer tap; complete; 5No.",qty:5,unit:"No.",rate:52000,budget:260000},
+  {ref:"C",desc:"Double bowl stainless steel kitchen sink; 2No.",qty:2,unit:"No.",rate:148000,budget:296000},
+  {ref:"D",desc:"50L electric storage water heater; connections; 5No.",qty:5,unit:"No.",rate:142000,budget:710000},
+  {ref:"E",desc:"Shower mixer valve with rose & screen; chrome; 4No.",qty:4,unit:"No.",rate:105000,budget:420000},
+  {ref:"F",desc:"Mirror 600×600mm over wash hand basin; 3No.",qty:3,unit:"No.",rate:14000,budget:42000},
+  {ref:"G",desc:"Mirror 1500×1200mm frameless wall mounted; 2No.",qty:2,unit:"No.",rate:28000,budget:56000},
+  {ref:"H",desc:"Soap dish, towel rail & toilet roll holder set; chrome; 5 sets",qty:5,unit:"Set",rate:36000,budget:180000},
+  {ref:"J",desc:"Floor drain/gully trap 100×100mm chrome cover; 8No.",qty:8,unit:"No.",rate:10500,budget:84000},
+  {ref:"K",desc:"15mm PPR supply pipe; all floors; complete with fittings; 80m",qty:80,unit:"m",rate:1500,budget:120000},
+  {ref:"L",desc:"25mm PPR supply pipe; branch distribution lines; 60m",qty:60,unit:"m",rate:1950,budget:117000},
+  {ref:"M",desc:"32mm PPR supply pipe; main distribution; 30m",qty:30,unit:"m",rate:2100,budget:63000},
+  {ref:"N",desc:"All PPR fittings, gate valves, ball valves & sundry plumbing",unit:"Lot",budget:220000},
+  {ref:"O",desc:"50mm uPVC waste pipe; all floors; 60m",qty:60,unit:"m",rate:1500,budget:90000},
+  {ref:"P",desc:"110mm uPVC soil pipe; main stack & WC branches; 50m",qty:50,unit:"m",rate:3100,budget:155000},
+  {ref:"Q",desc:"All uPVC drainage fittings, bends, tees, traps",unit:"Lot",budget:280000},
+  {ref:"R",desc:"65mm uPVC rainwater downpipe with brackets; 40m",qty:40,unit:"m",rate:2800,budget:112000},
+  {ref:"S",desc:"65mm uPVC half-round rainwater gutter with brackets; 40m",qty:40,unit:"m",rate:2800,budget:112000},
+  {ref:"T",desc:"Yard gully/foul water gully 100mm inlet; 4No.",qty:4,unit:"No.",rate:9500,budget:38000},
+  {ref:"U",desc:"Domestic deep borehole 100mm dia; min 45m; complete with pump & test",qty:1,unit:"No.",rate:3000000,budget:3000000},
+  {ref:"V",desc:"10,000L polyethylene overhead storage tanks on stand; 2No.",qty:2,unit:"No.",rate:380000,budget:760000},
+  {ref:"W",desc:"Duty/standby centrifugal transfer pump set 0.75kW; complete",qty:1,unit:"Set",rate:600000,budget:600000},
+  {ref:"X",desc:"40mm PPR cold water pipe; borehole to overhead tanks; 30m",qty:30,unit:"m",rate:4500,budget:135000},
+  {ref:"Y",desc:"All controls, starters & electrical connections for water supply",unit:"Lot",budget:165000},
+  {ref:"Z",desc:"110mm uPVC underground drainage; concrete bed; 40m",qty:40,unit:"m",rate:3000,budget:120000},
+  {ref:"AA",desc:"150mm uPVC underground drainage — main run to septic tank; 20m",qty:20,unit:"m",rate:3800,budget:76000},
+  {ref:"AB",desc:"Manholes, rodding eyes, gully connections & drainage backfill",unit:"Lot",budget:350000},
+  {ref:"AC",desc:"1HP (9000 BTU) inverter split AC unit; wall mounted; fully installed; 6No.",qty:6,unit:"No.",rate:350000,budget:2100000},
+  {ref:"AD",desc:"1.5HP (12000 BTU) inverter split AC unit; fully installed; 2No.",qty:2,unit:"No.",rate:530000,budget:1060000},
+  {ref:"AE",desc:"Refrigerant copper pipe pair 3/8\"+1/4\"; insulated armaflex; 64m",qty:64,unit:"m",rate:4200,budget:268800},
+  {ref:"AF",desc:"Armaflex insulation to refrigerant pipes; 64m",qty:64,unit:"m",rate:600,budget:38400},
+  {ref:"AG",desc:"25mm PVC condensate drain pipe; 24m",qty:24,unit:"m",rate:1200,budget:28800},
+  {ref:"AH",desc:"150mm wall/bathroom extractor fan; installed; 6No.",qty:6,unit:"No.",rate:32000,budget:192000},
+  {ref:"AJ",desc:"All AC installation sundries; brackets, screws, sealant",unit:"Lot",budget:400000},
+  {ref:"AK",desc:"6kg ABC dry powder fire extinguisher; wall bracket; 4No.",qty:4,unit:"No.",rate:45000,budget:180000},
+  {ref:"AL",desc:"Fire hydrant reel if required by authority (P.S.)",unit:"P.S.",budget:450000},
+]},
+};
+
+const ELEMENT_KEYS=Object.keys(BOQ);
+const TOTAL_BUDGET=Object.values(BOQ).reduce((s,el)=>s+el.budget,0);
+const COST_TYPES=["Materials","Labour","Other / Preliminary"];
+
+// ── Google Sheets Apps Script ──────────────────────────────────────────────
+const GS_SCRIPT=`// Quality Cost Tracker — Makurai Ziko
 // 1. Open your Google Sheet → Extensions → Apps Script
 // 2. Replace any existing code with this script
 // 3. Deploy → New Deployment → Web app
-//    Execute as: Me | Who can access: Anyone
-// 4. Copy the deployment URL into the app settings
+//    Execute as: Me  |  Who can access: Anyone
+// 4. Copy the deployment URL into the app Settings tab
 
 function doPost(e) {
   try {
     var d = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var log = ss.getSheetByName("WAGE BILLS LOG");
+    var log = ss.getSheetByName("COST LOG");
     if (!log) {
-      log = ss.insertSheet("WAGE BILLS LOG");
-      var h = ["Timestamp","Site","Bill Date","Supervisor",
-               "S/N","Work Description","Designation",
-               "Workers","Rate (N)","Amount (N)",
-               "Transfer?","Transfer From","Notes","Status"];
+      log = ss.insertSheet("COST LOG");
+      var h = [
+        "Timestamp","Date","Week Ref",
+        "Element Code","Element","BOQ Item Ref","BOQ Item Description",
+        "Cost Type","Work Description",
+        "Qty","Unit","Rate (₦)","Amount (₦)",
+        "Recorded By","Notes","Sheets Status"
+      ];
       log.appendRow(h);
       log.getRange(1,1,1,h.length)
-         .setBackground("#1F6E43").setFontColor("white").setFontWeight("bold");
+         .setBackground("#1A3352").setFontColor("white").setFontWeight("bold");
       log.setFrozenRows(1);
+      log.setColumnWidths(1,16,[140,90,80,80,140,80,280,100,250,60,60,90,110,120,200,90]);
     }
     var ts = new Date().toISOString();
-    d.items.forEach(function(item, i) {
-      log.appendRow([
-        ts, d.site, d.date, d.supervisor,
-        i+1, item.work, item.desig,
-        Number(item.workers)||"",
-        Number(item.rate)||"",
-        Number(item.amt)||0,
-        item.transfer ? "YES" : "",
-        item.transfer ? (item.from||"") : "",
-        i===0 ? (d.notes||"") : "",
-        "PENDING"
-      ]);
-    });
-    // summary row
-    log.appendRow([ts,d.site,d.date,d.supervisor,
-                   "","★ TOTAL","","","",
-                   Number(d.total)||0,"","","",""]);
+    log.appendRow([
+      ts, d.date, d.weekRef,
+      d.elementCode, d.element, d.itemRef, d.itemDesc,
+      d.costType, d.workDesc,
+      Number(d.qty)||"", d.unit, Number(d.rate)||"", Number(d.amount)||0,
+      d.recordedBy, d.notes||"", "PENDING"
+    ]);
     SpreadsheetApp.flush();
     return ContentService
       .createTextOutput(JSON.stringify({ok:true}))
@@ -74,49 +316,134 @@ function doPost(e) {
 }
 function doGet() {
   return ContentService
-    .createTextOutput(JSON.stringify({status:"Wage Bill API active"}))
+    .createTextOutput(JSON.stringify({status:"Quality Cost Tracker API active — Makurai Ziko"}))
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 
-function App() {
-  const [tab, setTab] = useState("form");
-  const [form, setForm] = useState({site:"", date:today(), supervisor:"", notes:""});
-  const [items, setItems] = useState([mkItem()]);
-  const [entries, setEntries] = useState([]);
-  const [url, setUrl] = useState("");
-  const [toast, setToast] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [exp, setExp] = useState(null);
-  const [copied, setCopied] = useState(false);
+// ── Shared styles ──────────────────────────────────────────────────────────
+const IS={
+  input:{width:"100%",padding:"9px 11px",border:`1px solid ${C.bdr}`,borderRadius:6,
+         fontSize:13,background:C.card,color:C.tx,outline:"none"},
+  label:{fontSize:11,color:C.tx2,fontWeight:600,textTransform:"uppercase",
+         letterSpacing:"0.07em",display:"block",marginBottom:4},
+  card:{background:C.card,borderRadius:10,border:`1px solid ${C.bdr}`,
+        padding:"12px 14px",marginBottom:10},
+  btn:(bg,fg="#fff")=>({background:bg,color:fg,padding:"10px 20px",borderRadius:6,
+      fontSize:13,fontWeight:600,border:"none",cursor:"pointer",width:"100%"}),
+};
+
+// ── getWeekRef: ISO week label from date string ────────────────────────────
+function getWeekRef(dateStr){
+  if(!dateStr)return"";
+  const d=new Date(dateStr+"T00:00:00");
+  const day=d.getDay();
+  const mon=new Date(d);mon.setDate(d.getDate()-(day===0?6:day-1));
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const fmt2=dd=>`${dd.getDate().toString().padStart(2,"0")}/${(dd.getMonth()+1).toString().padStart(2,"0")}`;
+  return`W${fmt2(mon)}–${fmt2(sun)}`;
+}
+
+// ── Main App ───────────────────────────────────────────────────────────────
+function App(){
+  const [tab,setTab]=useState("record");
+  const [entries,setEntries]=useState([]);
+  const [url,setUrl]=useState("");
+  const [toast,setToast]=useState(null);
+  const [busy,setBusy]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const [copied,setCopied]=useState(false);
+  const [logFilter,setLogFilter]=useState({elem:"",type:""});
+  const [expandedElem,setExpandedElem]=useState(null);
+
+  // Form state
+  const [form,setForm]=useState({date:today(),recordedBy:"",notes:""});
+  const [elemKey,setElemKey]=useState("");
+  const [itemRef,setItemRef]=useState("");
+  const [costType,setCostType]=useState("Materials");
+  const [workDesc,setWorkDesc]=useState("");
+  const [qty,setQty]=useState("");
+  const [unit,setUnit]=useState("");
+  const [rate,setRate]=useState("");
+  const [amount,setAmount]=useState("");
 
   useEffect(()=>{
     (async()=>{
-      try{const r=await window.storage.get("wbe");if(r)setEntries(JSON.parse(r.value));}catch(_){}
-      try{const c=await window.storage.get("wbc");if(c){const d=JSON.parse(c.value);setUrl(d.url||"");}}catch(_){}
+      try{const r=await window.storage.get("qct_entries");if(r)setEntries(JSON.parse(r.value));}catch(_){}
+      try{const c=await window.storage.get("qct_config");if(c){const d=JSON.parse(c.value);setUrl(d.url||"");}}catch(_){}
       setLoading(false);
     })();
   },[]);
 
-  const showToast = (msg,err)=>{ setToast({msg,err}); setTimeout(()=>setToast(null),3500); };
-  const total = items.reduce((s,i)=>s+(parseFloat(i.amt)||0),0);
+  const showToast=(msg,err=false)=>{setToast({msg,err});setTimeout(()=>setToast(null),3500)};
 
-  const updItem = (id,k,v) => setItems(prev=>prev.map(item=>{
-    if(item.id!==id) return item;
-    const u={...item,[k]:v};
-    if(k==="workers"||k==="rate"){
-      const w=parseFloat(k==="workers"?v:item.workers)||0;
-      const r=parseFloat(k==="rate"?v:item.rate)||0;
-      u.amt = (w&&r) ? String(Math.round(w*r)) : "";
-    }
-    return u;
-  }));
+  // Cascade: when element changes, reset item
+  const handleElemChange=v=>{setElemKey(v);setItemRef("");setUnit("");setRate("");setAmount("");};
 
-  const submit = async()=>{
-    if(!form.site||!form.date||!form.supervisor) return showToast("Fill site, date and supervisor",true);
-    if(items.some(i=>!i.work.trim())) return showToast("All work descriptions required",true);
+  const selectedItem=useMemo(()=>{
+    if(!elemKey||!itemRef)return null;
+    return BOQ[elemKey]?.items.find(i=>i.ref===itemRef)||null;
+  },[elemKey,itemRef]);
+
+  const handleItemChange=v=>{
+    setItemRef(v);
+    const item=BOQ[elemKey]?.items.find(i=>i.ref===v);
+    if(item){setUnit(item.unit||"");setRate(item.rate?String(item.rate):"");}
+    setAmount("");setQty("");
+  };
+
+  const handleQtyRate=(field,val)=>{
+    if(field==="qty")setQty(val);
+    if(field==="rate")setRate(val);
+    const q=parseFloat(field==="qty"?val:qty)||0;
+    const r=parseFloat(field==="rate"?val:rate)||0;
+    if(q&&r)setAmount(String(Math.round(q*r)));
+    else if(!q&&!r)setAmount("");
+  };
+
+  // Compute spent per element & item from entries
+  const spendMap=useMemo(()=>{
+    const map={};
+    entries.forEach(en=>{
+      if(!map[en.elemKey])map[en.elemKey]={total:0,items:{}};
+      map[en.elemKey].total+=(Number(en.amount)||0);
+      const k=en.itemRef;
+      if(!map[en.elemKey].items[k])map[en.elemKey].items[k]=0;
+      map[en.elemKey].items[k]+=(Number(en.amount)||0);
+    });
+    return map;
+  },[entries]);
+
+  const totalSpent=useMemo(()=>entries.reduce((s,en)=>s+(Number(en.amount)||0),0),[entries]);
+
+  const submit=async()=>{
+    if(!elemKey)return showToast("Select an element",true);
+    if(!itemRef)return showToast("Select a BOQ item",true);
+    if(!workDesc.trim())return showToast("Describe the actual work done",true);
+    if(!amount||isNaN(Number(amount)))return showToast("Enter a valid amount",true);
+    if(!form.recordedBy.trim())return showToast("Enter the name of who recorded this",true);
     setBusy(true);
-    const entry={id:Date.now(),...form,items:items.map(({id,...r})=>r),total,at:new Date().toISOString(),status:"local"};
+    const el=BOQ[elemKey];
+    const it=el.items.find(i=>i.ref===itemRef);
+    const entry={
+      id:uid(),
+      date:form.date,
+      weekRef:getWeekRef(form.date),
+      elemKey,
+      elementCode:el.code,
+      element:el.label,
+      itemRef,
+      itemDesc:it?.desc||"",
+      costType,
+      workDesc,
+      qty:qty||"",
+      unit,
+      rate:rate||"",
+      amount:Number(amount)||0,
+      recordedBy:form.recordedBy,
+      notes:form.notes,
+      at:new Date().toISOString(),
+      status:"local"
+    };
     if(url){
       try{
         await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(entry)});
@@ -125,297 +452,495 @@ function App() {
     }
     const next=[entry,...entries];
     setEntries(next);
-    try{await window.storage.set("wbe",JSON.stringify(next));}catch(_){}
+    try{await window.storage.set("qct_entries",JSON.stringify(next));}catch(_){}
     setBusy(false);
-    showToast(entry.status==="sent"?"Submitted to Google Sheets ✓":"Saved — add Sheets URL to auto-sync");
-    setForm({site:"",date:today(),supervisor:"",notes:""});
-    setItems([mkItem()]);
+    showToast(entry.status==="sent"?"Entry recorded & synced to Sheets ✓":"Entry saved locally — add Sheets URL to auto-sync");
+    // Reset form
+    setItemRef("");setWorkDesc("");setQty("");setUnit("");setRate("");setAmount("");
+    setForm(f=>({...f,notes:""}));
   };
 
-  const retryAll = async()=>{
-    if(!url) return showToast("Set Sheets URL in Settings first",true);
+  const retrySync=async()=>{
+    if(!url)return showToast("Add Google Sheets URL in Settings first",true);
     let sent=0;
-    const updated=await Promise.all(entries.map(async e=>{
-      if(e.status==="sent") return e;
-      try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(e)});sent++;return{...e,status:"sent"};}
-      catch{return e;}
+    const updated=await Promise.all(entries.map(async en=>{
+      if(en.status==="sent")return en;
+      try{await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(en)});sent++;return{...en,status:"sent"};}
+      catch{return en;}
     }));
     setEntries(updated);
-    try{await window.storage.set("wbe",JSON.stringify(updated));}catch(_){}
+    try{await window.storage.set("qct_entries",JSON.stringify(updated));}catch(_){}
     showToast(`${sent} entr${sent===1?"y":"ies"} synced to Sheets`);
   };
 
-  const saveConfig = async()=>{
-    try{await window.storage.set("wbc",JSON.stringify({url}));showToast("Settings saved");}
+  const saveConfig=async()=>{
+    try{await window.storage.set("qct_config",JSON.stringify({url}));showToast("Settings saved");}
     catch(_){showToast("Save failed",true);}
   };
 
-  const clearLog = async()=>{
+  const clearAll=async()=>{
+    if(!window.confirm("Clear all entries? This cannot be undone."))return;
     setEntries([]);
-    try{await window.storage.delete("wbe");}catch(_){}
-    showToast("Log cleared");
+    try{await window.storage.delete("qct_entries");}catch(_){}
+    showToast("All entries cleared");
   };
 
-  const inputStyle = {width:"100%",padding:"9px 11px",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",fontSize:13,background:"var(--color-background-primary)",color:"var(--color-text-primary)",boxSizing:"border-box"};
-  const labelStyle = {fontSize:11,color:"var(--color-text-secondary)",textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:4};
-  const cardStyle = {background:"var(--color-background-primary)",borderRadius:"var(--border-radius-lg)",border:"0.5px solid var(--color-border-tertiary)",padding:"12px 14px",marginBottom:10};
+  if(loading)return e("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",
+    height:300,color:C.tx2,fontSize:13}},"Loading…");
 
-  if(loading) return React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",minHeight:200,color:"var(--color-text-secondary)",fontSize:13}},"Loading…");
+  const TABS=[["record","Record","file-invoice"],["budget","Budget","chart-bar"],
+              ["log","Log","list-details"],["settings","settings","settings"]];
 
-  return React.createElement("div",{style:{background:"var(--color-background-tertiary)",minHeight:500}},
+  return e("div",{style:{background:C.bg,minHeight:500,maxWidth:600,margin:"0 auto"}},
 
     // Toast
-    toast && React.createElement("div",{style:{
-      background:toast.err?"var(--color-background-danger)":G,
-      color:toast.err?"var(--color-text-danger)":"white",
-      padding:"9px 16px",fontSize:13,fontWeight:500,textAlign:"center",
-      borderBottom:`0.5px solid ${toast.err?"var(--color-border-danger)":GD}`
-    }},toast.msg),
+    toast&&e("div",{style:{background:toast.err?C.redl:C.nav,color:toast.err?C.red:"#fff",
+      padding:"9px 16px",fontSize:12,fontWeight:500,textAlign:"center",
+      borderBottom:`1px solid ${toast.err?C.red:C.nav2}`}},toast.msg),
 
     // Header
-    React.createElement("div",{style:{background:G,padding:"14px 16px 12px"}},
-      React.createElement("p",{style:{color:"rgba(255,255,255,0.6)",fontSize:10,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 3px"}},"Sunville Developers"),
-      React.createElement("h1",{style:{color:"white",fontSize:17,fontWeight:500,margin:0}},
-        tab==="form"?"Daily wage bill":tab==="log"?`Submissions (${entries.length})`:"Settings"
-      )
+    e("div",{style:{background:`linear-gradient(135deg,${C.nav} 0%,${C.nav2} 100%)`,
+      padding:"14px 16px 10px"}},
+      e("div",{style:{fontSize:9,color:"rgba(255,255,255,0.45)",letterSpacing:"0.15em",
+        textTransform:"uppercase",marginBottom:2}},"PFTC Global Resources — Makurai Ziko"),
+      e("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
+        e("h1",{style:{color:"#fff",fontSize:16,fontWeight:600,margin:0}},
+          tab==="record"?"Record Cost Entry":
+          tab==="budget"?"Budget vs Actual":
+          tab==="log"?`Cost Log (${entries.length})`:
+          "Settings"),
+        e("div",{style:{textAlign:"right"}},
+          e("div",{style:{fontSize:9,color:"rgba(255,255,255,0.45)",letterSpacing:"0.1em"}},
+            "TOTAL PROJECT BUDGET"),
+          e("div",{style:{color:C.amb,fontSize:15,fontWeight:700}},
+            "₦"+fmtShort(TOTAL_BUDGET))
+      ))
     ),
 
     // Tab bar
-    React.createElement("div",{style:{display:"flex",background:"var(--color-background-primary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}},
-      [["form","file","Form"],["log","list","Log"],["settings","settings","Settings"]].map(([t,ic,lb])=>
-        React.createElement("button",{key:t,onClick:()=>setTab(t),style:{
-          flex:1,padding:"10px 4px",fontSize:12,fontWeight:tab===t?500:400,
-          color:tab===t?G:"var(--color-text-secondary)",
-          borderBottom:`2px solid ${tab===t?G:"transparent"}`,
-          background:"none",border:"none",borderBottom:`2px solid ${tab===t?G:"transparent"}`,
-          display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:"pointer"
-        }},
-          React.createElement("i",{className:`ti ti-${ic}`,style:{fontSize:18},["aria-hidden"]:"true"}),
-          lb
-        )
-      )
+    e("div",{style:{display:"flex",background:C.card,borderBottom:`1px solid ${C.bdr}`}},
+      TABS.map(([t,,lb])=>e("button",{key:t,onClick:()=>setTab(t),style:{
+        flex:1,padding:"10px 0 8px",fontSize:11,fontWeight:tab===t?700:400,
+        color:tab===t?C.nav:C.tx2,background:"none",border:"none",
+        borderBottom:`2px solid ${tab===t?C.nav:"transparent"}`,cursor:"pointer",
+        display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+        transition:"color 0.15s"
+      }},
+        e("span",{style:{fontSize:16}},[
+          "record"===t?"📋":"budget"===t?"📊":"log"===t?"🗂️":"⚙️"
+        ]),
+        lb
+      ))
     ),
 
-    // ===== FORM =====
-    tab==="form" && React.createElement("div",{style:{padding:"12px 16px 24px"}},
+    // ─── RECORD TAB ─────────────────────────────────────────────────────────
+    tab==="record"&&e("div",{style:{padding:"12px 16px 32px"}},
 
-      // Header card
-      React.createElement("div",{style:cardStyle},
-        React.createElement("div",{style:{marginBottom:10}},
-          React.createElement("label",{style:labelStyle},"Site location"),
-          React.createElement("select",{value:form.site,onChange:e=>setForm({...form,site:e.target.value}),style:{...inputStyle,appearance:"none"}},
-            React.createElement("option",{value:""},"— Select site —"),
-            ...SITES.map(s=>React.createElement("option",{key:s,value:s},s))
+      // Date & Recorded By
+      e("div",{style:{...IS.card}},
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+          e("div",null,
+            e("label",{style:IS.label},"Date"),
+            e("input",{type:"date",value:form.date,
+              onChange:ev=>setForm(f=>({...f,date:ev.target.value})),
+              style:{...IS.input}})
+          ),
+          e("div",null,
+            e("label",{style:IS.label},"Recorded by"),
+            e("input",{type:"text",value:form.recordedBy,placeholder:"Name…",
+              onChange:ev=>setForm(f=>({...f,recordedBy:ev.target.value})),
+              style:{...IS.input}})
           )
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
-          React.createElement("div",null,
-            React.createElement("label",{style:labelStyle},"Date"),
-            React.createElement("input",{type:"date",value:form.date,onChange:e=>setForm({...form,date:e.target.value}),style:inputStyle})
+        form.date&&e("div",{style:{marginTop:6,fontSize:11,color:C.tx3}},
+          "Week ref: ",e("strong",null,getWeekRef(form.date)))
+      ),
+
+      // Element selector
+      e("div",{style:IS.card},
+        e("label",{style:IS.label},"Element (BOQ Section)"),
+        e("select",{value:elemKey,onChange:ev=>handleElemChange(ev.target.value),
+          style:{...IS.input,appearance:"none",
+            backgroundImage:"url(\"data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E\")",
+            backgroundRepeat:"no-repeat",backgroundPosition:"right 10px center",paddingRight:28}},
+          e("option",{value:""},"— Select element —"),
+          ELEMENT_KEYS.map(k=>e("option",{key:k,value:k},
+            `${BOQ[k].code} — ${BOQ[k].label}  (₦${fmtShort(BOQ[k].budget)})`
+          ))
+        ),
+        // Budget mini-indicator when element selected
+        elemKey&&e("div",{style:{marginTop:8,padding:"8px 10px",borderRadius:6,
+          background:C.bg,border:`1px solid ${C.bdr}`}},
+          e("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
+            e("span",{style:{fontSize:10,color:C.tx2}},"Element budget"),
+            e("span",{style:{fontSize:10,fontWeight:700,color:C.nav}},
+              "₦"+fmt(BOQ[elemKey].budget))
           ),
-          React.createElement("div",null,
-            React.createElement("label",{style:labelStyle},"Supervisor"),
-            React.createElement("input",{type:"text",placeholder:"Name",value:form.supervisor,onChange:e=>setForm({...form,supervisor:e.target.value}),style:inputStyle})
+          e("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+            e("span",{style:{fontSize:10,color:C.tx2}},"Spent so far"),
+            e("span",{style:{fontSize:10,fontWeight:700,
+              color:pctColor(pct(spendMap[elemKey]?.total||0,BOQ[elemKey].budget))}},
+              "₦"+fmt(spendMap[elemKey]?.total||0)+" ("+
+              pct(spendMap[elemKey]?.total||0,BOQ[elemKey].budget).toFixed(1)+"%)")
+          ),
+          e("div",{style:{height:4,background:C.bdr,borderRadius:2,overflow:"hidden"}},
+            e("div",{style:{height:"100%",width:
+              Math.min(pct(spendMap[elemKey]?.total||0,BOQ[elemKey].budget),100)+"%",
+              background:pctColor(pct(spendMap[elemKey]?.total||0,BOQ[elemKey].budget)),
+              borderRadius:2,transition:"width 0.3s"}})
           )
         )
       ),
 
-      // Items header
-      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
-        React.createElement("span",{style:{fontSize:12,fontWeight:500,color:"var(--color-text-primary)"}},"Work items"),
-        React.createElement("span",{style:{fontSize:11,color:"var(--color-text-secondary)"}},`${items.length} item${items.length!==1?"s":""}`)
-      ),
-
-      // Item cards
-      ...items.map((item,idx)=>
-        React.createElement("div",{key:item.id,style:{...cardStyle,position:"relative"}},
-          // Row 1: number + desc + delete
-          React.createElement("div",{style:{display:"flex",alignItems:"flex-start",gap:8,marginBottom:8}},
-            React.createElement("div",{style:{background:GL,color:G,borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:500,flexShrink:0,marginTop:7}},idx+1),
-            React.createElement("input",{type:"text",placeholder:"Work description",value:item.work,onChange:e=>updItem(item.id,"work",e.target.value),style:{...inputStyle,flex:1}}),
-            items.length>1 && React.createElement("button",{onClick:()=>setItems(p=>p.filter(i=>i.id!==item.id)),style:{color:"var(--color-text-danger)",background:"none",border:"none",padding:"4px",flexShrink:0,marginTop:4,cursor:"pointer"}},
-              React.createElement("i",{className:"ti ti-trash",style:{fontSize:16},["aria-hidden"]:"true"})
-            )
+      // BOQ Item selector
+      elemKey&&e("div",{style:IS.card},
+        e("label",{style:IS.label},"BOQ Item"),
+        e("select",{value:itemRef,onChange:ev=>handleItemChange(ev.target.value),
+          style:{...IS.input,appearance:"none",
+            backgroundImage:"url(\"data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E\")",
+            backgroundRepeat:"no-repeat",backgroundPosition:"right 10px center",paddingRight:28}},
+          e("option",{value:""},"— Select item —"),
+          (BOQ[elemKey]?.items||[]).map(it=>e("option",{key:it.ref,value:it.ref},
+            `${it.ref}  |  ${it.desc.substring(0,60)}${it.desc.length>60?"…":""}`
+          ))
+        ),
+        // Item detail card
+        selectedItem&&e("div",{style:{marginTop:8,padding:"10px 12px",borderRadius:6,
+          background:`linear-gradient(135deg,${C.nav} 0%,${C.nav2} 100%)`,color:"#fff"}},
+          e("div",{style:{fontSize:10,color:"rgba(255,255,255,0.5)",marginBottom:3}},
+            `BOQ ${BOQ[elemKey].code}${selectedItem.ref}`),
+          e("div",{style:{fontSize:12,fontWeight:600,marginBottom:8,lineHeight:1.4}},
+            selectedItem.desc),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}},
+            [
+              ["BOQ Budget","₦"+fmt(selectedItem.budget)],
+              ["Spent","₦"+fmt(spendMap[elemKey]?.items[selectedItem.ref]||0)],
+              ["Remaining","₦"+fmt(Math.max(0,selectedItem.budget-(spendMap[elemKey]?.items[selectedItem.ref]||0)))],
+            ].map(([k,v])=>e("div",{key:k,style:{background:"rgba(255,255,255,0.08)",
+              borderRadius:4,padding:"5px 7px"}},
+              e("div",{style:{fontSize:9,color:"rgba(255,255,255,0.45)",marginBottom:1}},k),
+              e("div",{style:{fontSize:11,fontWeight:700,color:C.amb}},v)
+            ))
           ),
-          // Row 2: desig + workers
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
-            React.createElement("div",null,
-              React.createElement("label",{style:labelStyle},"Designation"),
-              React.createElement("select",{value:item.desig,onChange:e=>updItem(item.id,"desig",e.target.value),style:{...inputStyle,fontSize:12}},
-                ...DESIGS.map(d=>React.createElement("option",{key:d,value:d},d))
-              )
-            ),
-            React.createElement("div",null,
-              React.createElement("label",{style:labelStyle},"No. workers"),
-              React.createElement("input",{type:"number",placeholder:"e.g. 4",value:item.workers,onChange:e=>updItem(item.id,"workers",e.target.value),style:{...inputStyle,fontSize:13}})
-            )
-          ),
-          // Row 3: rate + amount
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}},
-            React.createElement("div",null,
-              React.createElement("label",{style:labelStyle},"Rate (₦ per worker)"),
-              React.createElement("input",{type:"number",placeholder:"0",value:item.rate,onChange:e=>updItem(item.id,"rate",e.target.value),style:{...inputStyle,fontSize:13}})
-            ),
-            React.createElement("div",null,
-              React.createElement("label",{style:labelStyle},"Amount (₦)"),
-              React.createElement("input",{type:"number",placeholder:"auto",value:item.amt,onChange:e=>updItem(item.id,"amt",e.target.value),
-                style:{...inputStyle,fontSize:13,background:item.amt?"var(--color-background-success)":"var(--color-background-primary)"}})
-            )
-          ),
-          // Transfer toggle
-          React.createElement("button",{onClick:()=>updItem(item.id,"transfer",!item.transfer),style:{
-            width:"100%",fontSize:12,padding:"7px 10px",
-            borderRadius:"var(--border-radius-md)",
-            background:item.transfer?GL:"var(--color-background-secondary)",
-            color:item.transfer?G:"var(--color-text-secondary)",
-            border:`0.5px solid ${item.transfer?G:"var(--color-border-secondary)"}`,
-            cursor:"pointer",display:"flex",alignItems:"center",gap:6
-          }},
-            React.createElement("i",{className:"ti ti-arrow-right",["aria-hidden"]:"true"}),
-            item.transfer?"Inter-site transfer (tap to clear)":"Flag as inter-site transfer"
-          ),
-          item.transfer && React.createElement("div",{style:{marginTop:8}},
-            React.createElement("label",{style:{...labelStyle,color:G}},"Transfer FROM site"),
-            React.createElement("select",{value:item.from,onChange:e=>updItem(item.id,"from",e.target.value),
-              style:{...inputStyle,border:`0.5px solid ${G}`}},
-              React.createElement("option",{value:""},"— Select source site —"),
-              ...SITES.filter(s=>s!==form.site).map(s=>React.createElement("option",{key:s,value:s},s))
-            )
-          )
+          selectedItem.qty&&e("div",{style:{marginTop:6,fontSize:10,
+            color:"rgba(255,255,255,0.4)"}},
+            `BOQ qty: ${selectedItem.qty} ${selectedItem.unit}${selectedItem.rate?` @ ₦${fmt(selectedItem.rate)}`:""}`)
         )
       ),
 
-      // Add item
-      React.createElement("button",{onClick:()=>setItems(p=>[...p,mkItem()]),style:{
-        width:"100%",padding:"11px",borderRadius:"var(--border-radius-md)",
-        background:GL,color:G,border:`0.5px solid ${G}`,fontSize:13,fontWeight:500,
-        display:"flex",alignItems:"center",justifyContent:"center",gap:6,cursor:"pointer",marginBottom:10
-      }},
-        React.createElement("i",{className:"ti ti-plus",["aria-hidden"]:"true"})," Add work item"
+      // Cost Type
+      itemRef&&e("div",{style:IS.card},
+        e("label",{style:IS.label},"Cost Type"),
+        e("div",{style:{display:"flex",gap:8}},
+          COST_TYPES.map(t=>e("button",{key:t,onClick:()=>setCostType(t),style:{
+            flex:1,padding:"8px 4px",borderRadius:6,fontSize:12,fontWeight:500,
+            border:`1.5px solid ${costType===t?C.nav:C.bdr}`,
+            background:costType===t?C.nav:C.card,
+            color:costType===t?"#fff":C.tx2,cursor:"pointer",transition:"all 0.15s"
+          }},t))
+        )
       ),
 
-      // Notes
-      React.createElement("div",{style:cardStyle},
-        React.createElement("label",{style:labelStyle},"Notes (optional)"),
-        React.createElement("textarea",{value:form.notes,onChange:e=>setForm({...form,notes:e.target.value}),placeholder:"Additional remarks…",rows:2,style:{...inputStyle,resize:"none"}})
-      ),
+      // Work Description & Amounts
+      itemRef&&e("div",{style:IS.card},
+        e("label",{style:IS.label},"Actual Work Done"),
+        e("textarea",{value:workDesc,placeholder:"Describe what was actually carried out…",
+          onChange:ev=>setWorkDesc(ev.target.value),
+          rows:2,style:{...IS.input,resize:"vertical",lineHeight:1.5}}),
 
-      // Total
-      React.createElement("div",{style:{background:G,borderRadius:"var(--border-radius-lg)",padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
-        React.createElement("span",{style:{color:"rgba(255,255,255,0.7)",fontSize:12,textTransform:"uppercase",letterSpacing:"0.1em"}},"Daily total"),
-        React.createElement("span",{style:{color:"white",fontSize:26,fontWeight:500,fontFamily:"var(--font-mono)"}},`₦${fmt(total)}`)
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginTop:10}},
+          e("div",null,
+            e("label",{style:IS.label},"Qty"),
+            e("input",{type:"number",value:qty,placeholder:"0",
+              onChange:ev=>handleQtyRate("qty",ev.target.value),style:IS.input})
+          ),
+          e("div",null,
+            e("label",{style:IS.label},"Unit"),
+            e("input",{type:"text",value:unit,placeholder:"m²",
+              onChange:ev=>setUnit(ev.target.value),style:IS.input})
+          ),
+          e("div",null,
+            e("label",{style:IS.label},"Rate (₦)"),
+            e("input",{type:"number",value:rate,placeholder:"0",
+              onChange:ev=>handleQtyRate("rate",ev.target.value),style:IS.input})
+          ),
+          e("div",null,
+            e("label",{style:IS.label},"Amount (₦)"),
+            e("input",{type:"number",value:amount,placeholder:"0",
+              onChange:ev=>setAmount(ev.target.value),
+              style:{...IS.input,background:C.ambl,fontWeight:700,color:C.nav}})
+          )
+        ),
+        e("div",{style:{marginTop:10}},
+          e("label",{style:IS.label},"Notes (optional)"),
+          e("input",{type:"text",value:form.notes,placeholder:"Any remarks…",
+            onChange:ev=>setForm(f=>({...f,notes:ev.target.value})),style:IS.input})
+        )
       ),
 
       // Submit
-      React.createElement("button",{onClick:submit,disabled:busy,style:{
-        width:"100%",padding:"14px",borderRadius:"var(--border-radius-lg)",
-        background:G,color:"white",border:"none",fontSize:14,fontWeight:500,
-        display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-        opacity:busy?0.7:1,cursor:busy?"default":"pointer"
-      }},
-        busy
-          ? [React.createElement("i",{key:"s",className:"ti ti-refresh spinning",["aria-hidden"]:"true"})," Submitting…"]
-          : [React.createElement("i",{key:"s",className:"ti ti-send",["aria-hidden"]:"true"})," Submit wage bill"]
+      itemRef&&e("button",{onClick:submit,disabled:busy,style:{
+        ...IS.btn(C.nav),opacity:busy?0.6:1,
+        boxShadow:"0 2px 8px rgba(26,51,82,0.3)"
+      }},busy?"Saving…":"Save Entry"),
+
+      !itemRef&&e("div",{style:{textAlign:"center",padding:"24px 16px",
+        color:C.tx3,fontSize:12}},
+        e("div",{style:{fontSize:28,marginBottom:8}},"📋"),
+        "Select an element and BOQ item above to begin recording a cost entry."
       )
     ),
 
-    // ===== LOG =====
-    tab==="log" && React.createElement("div",{style:{padding:"12px 16px 24px"}},
-      entries.length===0
-        ? React.createElement("div",{style:{textAlign:"center",padding:"48px 0"}},
-            React.createElement("i",{className:"ti ti-clipboard-list",style:{fontSize:40,color:"var(--color-text-tertiary)"},["aria-hidden"]:"true"}),
-            React.createElement("p",{style:{color:"var(--color-text-secondary)",fontSize:14,marginTop:12}},"No submissions yet"),
-            React.createElement("p",{style:{color:"var(--color-text-tertiary)",fontSize:12}},"Submitted wage bills will appear here")
-          )
-        : React.createElement("div",null,
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-              React.createElement("span",{style:{fontSize:12,color:"var(--color-text-secondary)"}},`${entries.length} submission${entries.length!==1?"s":""}`),
-              React.createElement("button",{onClick:clearLog,style:{fontSize:12,color:"var(--color-text-danger)",background:"none",border:"none",cursor:"pointer"}},"Clear all")
-            ),
-            ...entries.map(e=>
-              React.createElement("div",{key:e.id,style:{background:"var(--color-background-primary)",borderRadius:"var(--border-radius-lg)",border:"0.5px solid var(--color-border-tertiary)",marginBottom:8,overflow:"hidden"}},
-                React.createElement("button",{onClick:()=>setExp(exp===e.id?null:e.id),style:{width:"100%",padding:"12px 14px",textAlign:"left",background:"none",border:"none",cursor:"pointer"}},
-                  React.createElement("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between"}},
-                    React.createElement("div",{style:{flex:1}},
-                      React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:4}},
-                        React.createElement("span",{style:{background:GL,color:G,borderRadius:"var(--border-radius-md)",padding:"2px 8px",fontSize:11,fontWeight:500}},e.site),
-                        React.createElement("span",{style:{
-                          background:e.status==="sent"?"var(--color-background-success)":"var(--color-background-warning)",
-                          color:e.status==="sent"?"var(--color-text-success)":"var(--color-text-warning)",
-                          borderRadius:"var(--border-radius-md)",padding:"2px 8px",fontSize:11,fontWeight:500
-                        }},e.status==="sent"?"Synced":"Local")
-                      ),
-                      React.createElement("p",{style:{fontSize:13,fontWeight:500,color:"var(--color-text-primary)",margin:"0 0 2px"}},e.supervisor),
-                      React.createElement("p",{style:{fontSize:11,color:"var(--color-text-secondary)",margin:0}},`${e.date} · ${e.items.length} item${e.items.length!==1?"s":""}`)
-                    ),
-                    React.createElement("div",{style:{textAlign:"right",marginLeft:12}},
-                      React.createElement("p",{style:{fontSize:18,fontWeight:500,color:G,fontFamily:"var(--font-mono)",margin:"0 0 4px"}},`₦${fmt(e.total)}`),
-                      React.createElement("i",{className:`ti ti-chevron-${exp===e.id?"up":"down"}`,style:{fontSize:13,color:"var(--color-text-tertiary)"},["aria-hidden"]:"true"})
-                    )
-                  )
-                ),
-                exp===e.id && React.createElement("div",{style:{borderTop:"0.5px solid var(--color-border-tertiary)",padding:"10px 14px"}},
-                  ...e.items.map((item,i)=>
-                    React.createElement("div",{key:i,style:{background:"var(--color-background-secondary)",borderRadius:"var(--border-radius-md)",padding:"8px 10px",marginBottom:5}},
-                      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-                        React.createElement("div",{style:{flex:1}},
-                          React.createElement("p",{style:{fontSize:12,fontWeight:500,color:"var(--color-text-primary)",margin:"0 0 2px"}},item.work),
-                          React.createElement("p",{style:{fontSize:11,color:"var(--color-text-secondary)",margin:0}},`${item.desig}${item.workers?` · ${item.workers} workers`:""}${item.rate?` · ₦${fmt(item.rate)}`+"/worker":""}`),
-                          item.transfer && React.createElement("p",{style:{fontSize:11,color:G,margin:"2px 0 0",fontWeight:500}},`⇄ from ${item.from||"unknown"}`)
-                        ),
-                        React.createElement("span",{style:{fontSize:13,fontWeight:500,color:G,fontFamily:"var(--font-mono)",marginLeft:8}},`₦${fmt(item.amt)}`)
-                      )
-                    )
-                  ),
-                  e.notes && React.createElement("p",{style:{fontSize:11,color:"var(--color-text-tertiary)",fontStyle:"italic",marginTop:6}},`"${e.notes}"`)
+    // ─── BUDGET TAB ──────────────────────────────────────────────────────────
+    tab==="budget"&&e("div",{style:{padding:"12px 16px 32px"}},
+
+      // Project total card
+      e("div",{style:{...IS.card,background:`linear-gradient(135deg,${C.nav} 0%,${C.nav2} 100%)`,
+        marginBottom:12,padding:"14px 16px"}},
+        e("div",{style:{fontSize:9,color:"rgba(255,255,255,0.45)",letterSpacing:"0.12em",
+          textTransform:"uppercase",marginBottom:6}},"Project Total — All Elements"),
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}},
+          [
+            ["Budget",TOTAL_BUDGET],
+            ["Spent",totalSpent],
+            ["Remaining",Math.max(0,TOTAL_BUDGET-totalSpent)],
+          ].map(([k,v])=>e("div",{key:k},
+            e("div",{style:{fontSize:9,color:"rgba(255,255,255,0.4)",marginBottom:2}},k),
+            e("div",{style:{fontSize:15,fontWeight:700,
+              color:k==="Spent"?C.amb:k==="Remaining"?C.grn:"#fff"}},
+              "₦"+fmtShort(v))
+          ))
+        ),
+        e("div",{style:{height:6,background:"rgba(255,255,255,0.1)",borderRadius:3,overflow:"hidden"}},
+          e("div",{style:{height:"100%",
+            width:Math.min(pct(totalSpent,TOTAL_BUDGET),100)+"%",
+            background:pctColor(pct(totalSpent,TOTAL_BUDGET)),
+            borderRadius:3,transition:"width 0.4s"}})
+        ),
+        e("div",{style:{marginTop:4,fontSize:10,color:"rgba(255,255,255,0.4)",textAlign:"right"}},
+          pct(totalSpent,TOTAL_BUDGET).toFixed(2)+"% spent")
+      ),
+
+      // Per-element cards
+      ELEMENT_KEYS.map(k=>{
+        const el=BOQ[k];
+        const spent=spendMap[k]?.total||0;
+        const p=pct(spent,el.budget);
+        const isExpanded=expandedElem===k;
+        return e("div",{key:k,style:{...IS.card,padding:0,overflow:"hidden",marginBottom:8}},
+          // Header row
+          e("button",{onClick:()=>setExpandedElem(isExpanded?null:k),style:{
+            width:"100%",background:isExpanded?C.nav:C.card,border:"none",
+            padding:"10px 12px",cursor:"pointer",textAlign:"left",
+            borderBottom:isExpanded?`1px solid ${C.nav2}`:"none"
+          }},
+            e("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              e("div",{style:{
+                width:28,height:28,borderRadius:6,display:"flex",alignItems:"center",
+                justifyContent:"center",fontSize:12,fontWeight:800,flexShrink:0,
+                background:isExpanded?"rgba(255,255,255,0.1)":C.bg,
+                color:isExpanded?"#fff":C.nav,border:`1px solid ${isExpanded?C.nav2:C.bdr}`
+              }},el.code),
+              e("div",{style:{flex:1,minWidth:0}},
+                e("div",{style:{fontSize:12,fontWeight:600,
+                  color:isExpanded?"#fff":C.tx,marginBottom:2}},el.label),
+                e("div",{style:{height:3,background:isExpanded?"rgba(255,255,255,0.15)":C.bdr,
+                  borderRadius:2,overflow:"hidden"}},
+                  e("div",{style:{height:"100%",width:Math.min(p,100)+"%",
+                    background:pctColor(p),borderRadius:2}})
                 )
+              ),
+              e("div",{style:{textAlign:"right",flexShrink:0}},
+                e("div",{style:{fontSize:12,fontWeight:700,
+                  color:isExpanded?C.amb:pctColor(p)}},
+                  "₦"+fmtShort(spent)),
+                e("div",{style:{fontSize:10,
+                  color:isExpanded?"rgba(255,255,255,0.45)":C.tx3}},
+                  "/ ₦"+fmtShort(el.budget)),
+                e("div",{style:{fontSize:9,
+                  padding:"1px 5px",borderRadius:3,marginTop:2,display:"inline-block",
+                  background:isExpanded?"rgba(255,255,255,0.1)":pctBg(p),
+                  color:isExpanded?"rgba(255,255,255,0.7)":pctColor(p)}},
+                  p.toFixed(1)+"%")
               )
             )
+          ),
+          // Expanded item breakdown
+          isExpanded&&e("div",{style:{padding:"8px 0"}},
+            el.items.map(it=>{
+              const itSpent=spendMap[k]?.items[it.ref]||0;
+              const itP=pct(itSpent,it.budget);
+              return e("div",{key:it.ref,style:{padding:"6px 12px",
+                borderBottom:`1px solid rgba(255,255,255,0.05)`}},
+                e("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                  e("div",{style:{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",
+                    width:20,flexShrink:0}},it.ref),
+                  e("div",{style:{flex:1,minWidth:0}},
+                    e("div",{style:{fontSize:11,color:"rgba(255,255,255,0.8)",
+                      whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+                      marginBottom:2}},it.desc),
+                    e("div",{style:{height:2,background:"rgba(255,255,255,0.08)",borderRadius:1}},
+                      itSpent>0&&e("div",{style:{height:"100%",width:Math.min(itP,100)+"%",
+                        background:pctColor(itP),borderRadius:1}})
+                    )
+                  ),
+                  e("div",{style:{textAlign:"right",flexShrink:0,minWidth:90}},
+                    e("div",{style:{fontSize:11,fontWeight:600,
+                      color:itSpent>0?C.amb:"rgba(255,255,255,0.25)"}},
+                      itSpent>0?"₦"+fmtShort(itSpent):"—"),
+                    e("div",{style:{fontSize:9,color:"rgba(255,255,255,0.3)"}},
+                      "₦"+fmtShort(it.budget))
+                  )
+                )
+              )
+            })
           )
+        )
+      })
     ),
 
-    // ===== SETTINGS =====
-    tab==="settings" && React.createElement("div",{style:{padding:"12px 16px 24px"}},
+    // ─── LOG TAB ─────────────────────────────────────────────────────────────
+    tab==="log"&&e("div",{style:{padding:"12px 16px 32px"}},
 
-      React.createElement("div",{style:cardStyle},
-        React.createElement("h2",{style:{fontSize:14,fontWeight:500,margin:"0 0 4px"}},"Google Sheets integration"),
-        React.createElement("p",{style:{fontSize:12,color:"var(--color-text-secondary)",margin:"0 0 12px"}},"Deploy the Apps Script below as a web app, paste the URL here, and all wage bill submissions will sync to a WAGE BILLS LOG sheet in your tracker automatically."),
-        React.createElement("label",{style:labelStyle},"Apps Script web app URL"),
-        React.createElement("input",{type:"url",value:url,onChange:e=>setUrl(e.target.value),placeholder:"https://script.google.com/macros/s/…",style:{...inputStyle,marginBottom:10,fontSize:12}}),
-        React.createElement("button",{onClick:saveConfig,style:{width:"100%",padding:"10px",background:G,color:"white",border:"none",borderRadius:"var(--border-radius-md)",fontSize:13,fontWeight:500,cursor:"pointer"}},"Save settings")
-      ),
-
-      entries.filter(e=>e.status!=="sent").length>0 && React.createElement("div",{style:cardStyle},
-        React.createElement("h2",{style:{fontSize:14,fontWeight:500,margin:"0 0 4px"}},"Pending sync"),
-        React.createElement("p",{style:{fontSize:12,color:"var(--color-text-secondary)",margin:"0 0 10px"}},`${entries.filter(e=>e.status!=="sent").length} local entr${entries.filter(e=>e.status!=="sent").length===1?"y":"ies"} waiting to sync to Google Sheets.`),
-        React.createElement("button",{onClick:retryAll,style:{width:"100%",padding:"10px",background:GL,color:G,border:`0.5px solid ${G}`,borderRadius:"var(--border-radius-md)",fontSize:13,fontWeight:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
-          React.createElement("i",{className:"ti ti-refresh",["aria-hidden"]:"true"})," Retry all unsynced"
+      // Filters
+      e("div",{style:{display:"flex",gap:8,marginBottom:12}},
+        e("select",{value:logFilter.elem,
+          onChange:ev=>setLogFilter(f=>({...f,elem:ev.target.value})),
+          style:{...IS.input,flex:1}},
+          e("option",{value:""},"All elements"),
+          ELEMENT_KEYS.map(k=>e("option",{key:k,value:k},`${BOQ[k].code} — ${BOQ[k].label}`))
+        ),
+        e("select",{value:logFilter.type,
+          onChange:ev=>setLogFilter(f=>({...f,type:ev.target.value})),
+          style:{...IS.input,flex:"0 0 110px"}},
+          e("option",{value:""},"All types"),
+          COST_TYPES.map(t=>e("option",{key:t,value:t},t))
         )
       ),
 
-      React.createElement("div",{style:cardStyle},
-        React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}},
-          React.createElement("h2",{style:{fontSize:14,fontWeight:500,margin:0}},"Apps Script code"),
-          React.createElement("button",{onClick:()=>{try{navigator.clipboard.writeText(SCRIPT);}catch(_){}setCopied(true);setTimeout(()=>setCopied(false),2000);},
-            style:{background:copied?GL:"var(--color-background-secondary)",color:copied?G:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:"var(--border-radius-md)",padding:"5px 10px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:4}},
-            React.createElement("i",{className:`ti ti-${copied?"check":"copy"}`,style:{fontSize:13,color:copied?G:undefined},["aria-hidden"]:"true"}),
-            copied?"Copied":"Copy"
+      // Sync bar
+      entries.some(en=>en.status!=="sent")&&e("div",{style:{
+        display:"flex",alignItems:"center",justifyContent:"space-between",
+        background:C.wrnl,border:`1px solid #FCD34D`,borderRadius:6,
+        padding:"7px 11px",marginBottom:10,fontSize:12}},
+        e("span",{style:{color:C.wrn}},
+          entries.filter(en=>en.status!=="sent").length+" unsynced entries"),
+        e("button",{onClick:retrySync,style:{
+          background:C.wrn,color:"#fff",border:"none",borderRadius:4,
+          padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}},
+          "Sync now")
+      ),
+
+      // Entries
+      entries.length===0&&e("div",{style:{textAlign:"center",padding:"32px 0",
+        color:C.tx3,fontSize:12}},
+        e("div",{style:{fontSize:28,marginBottom:8}},"🗂️"),
+        "No entries yet. Record your first cost entry from the Record tab."),
+
+      entries
+        .filter(en=>(!logFilter.elem||en.elemKey===logFilter.elem)&&
+                    (!logFilter.type||en.costType===logFilter.type))
+        .map(en=>e("div",{key:en.id,style:{...IS.card,padding:"10px 12px"}},
+          e("div",{style:{display:"flex",alignItems:"flex-start",gap:8}},
+            e("div",{style:{
+              background:C.nav,color:"#fff",borderRadius:4,
+              padding:"3px 7px",fontSize:10,fontWeight:700,flexShrink:0
+            }},`${BOQ[en.elemKey]?.code||"?"}${en.itemRef}`),
+            e("div",{style:{flex:1,minWidth:0}},
+              e("div",{style:{fontSize:11,fontWeight:600,color:C.tx,marginBottom:1}},
+                en.workDesc||en.itemDesc),
+              e("div",{style:{fontSize:10,color:C.tx2,
+                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+                en.itemDesc),
+              e("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginTop:5}},
+                e("span",{style:{fontSize:9,padding:"2px 6px",borderRadius:3,
+                  background:en.costType==="Materials"?C.grnl:
+                              en.costType==="Labour"?C.ambl:C.bg,
+                  color:en.costType==="Materials"?C.grn:
+                        en.costType==="Labour"?C.wrn:C.tx2,
+                  fontWeight:600}},en.costType),
+                e("span",{style:{fontSize:9,color:C.tx3}},en.date),
+                e("span",{style:{fontSize:9,color:C.tx3}},en.weekRef),
+                en.status==="sent"&&e("span",{style:{fontSize:9,color:C.grn2}},
+                  "✓ Synced"),
+                en.notes&&e("span",{style:{fontSize:9,color:C.tx3}},
+                  "📝 "+en.notes.substring(0,30))
+              )
+            ),
+            e("div",{style:{textAlign:"right",flexShrink:0}},
+              e("div",{style:{fontSize:13,fontWeight:700,color:C.nav}},
+                "₦"+fmt(en.amount)),
+              en.qty&&e("div",{style:{fontSize:9,color:C.tx3,marginTop:1}},
+                `${en.qty} ${en.unit} @ ₦${fmt(en.rate||0)}`)
+            )
           )
+        ))
+    ),
+
+    // ─── SETTINGS TAB ────────────────────────────────────────────────────────
+    tab==="settings"&&e("div",{style:{padding:"12px 16px 32px"}},
+
+      e("div",{style:IS.card},
+        e("div",{style:{fontSize:12,fontWeight:700,color:C.tx,marginBottom:10}},
+          "Google Sheets Sync"),
+        e("label",{style:IS.label},"Deployment URL"),
+        e("input",{type:"url",value:url,placeholder:"https://script.google.com/…/exec",
+          onChange:ev=>setUrl(ev.target.value),style:{...IS.input,marginBottom:8}}),
+        e("button",{onClick:saveConfig,style:IS.btn(C.nav)},"Save URL"),
+        url&&e("button",{onClick:retrySync,style:{
+          ...IS.btn("transparent",C.nav2),border:`1px solid ${C.bdr}`,marginTop:8}},
+          "Re-sync pending entries")
+      ),
+
+      e("div",{style:IS.card},
+        e("div",{style:{display:"flex",alignItems:"center",
+          justifyContent:"space-between",marginBottom:10}},
+          e("div",{style:{fontSize:12,fontWeight:700,color:C.tx}},
+            "Apps Script Code"),
+          e("button",{onClick:()=>{
+            try{navigator.clipboard.writeText(GS_SCRIPT);}catch(_){}
+            setCopied(true);setTimeout(()=>setCopied(false),2000);
+          },style:{background:copied?C.grn:C.bg,color:copied?"#fff":C.tx2,
+            border:`1px solid ${copied?C.grn:C.bdr}`,padding:"4px 10px",
+            borderRadius:4,fontSize:11,fontWeight:600,cursor:"pointer"}},
+            copied?"Copied ✓":"Copy code")
         ),
-        React.createElement("ol",{style:{fontSize:11,color:"var(--color-text-secondary)",margin:"0 0 10px",paddingLeft:18,lineHeight:1.8}},
-          React.createElement("li",null,"Open your Google Sheet → Extensions → Apps Script"),
-          React.createElement("li",null,"Paste this code, replacing any existing content"),
-          React.createElement("li",null,"Deploy → New Deployment → Web app"),
-          React.createElement("li",null,"Execute as: Me  |  Access: Anyone"),
-          React.createElement("li",null,"Copy the URL into the field above and save")
+        e("p",{style:{fontSize:11,color:C.tx2,marginBottom:8,lineHeight:1.5}},
+          "1. Open your Google Sheet → Extensions → Apps Script",e("br"),
+          "2. Replace existing code with the script below",e("br"),
+          "3. Deploy → New Deployment → Web app (Execute as: Me, Access: Anyone)",e("br"),
+          "4. Copy the URL above and paste it into the field above"
         ),
-        React.createElement("div",{style:{background:"#16181c",borderRadius:"var(--border-radius-md)",padding:"12px",maxHeight:240,overflowY:"auto"}},
-          React.createElement("pre",{style:{margin:0,fontSize:10,color:"#a8b4c8",fontFamily:"var(--font-mono)",whiteSpace:"pre-wrap",wordBreak:"break-word",lineHeight:1.55}},SCRIPT)
-        )
+        e("pre",{style:{margin:0,fontSize:9,color:C.tx2,
+          background:C.bg,padding:"10px",borderRadius:6,
+          overflowX:"auto",lineHeight:1.6,whiteSpace:"pre-wrap",wordBreak:"break-word"}},
+          GS_SCRIPT)
+      ),
+
+      e("div",{style:IS.card},
+        e("div",{style:{fontSize:12,fontWeight:700,color:C.tx,marginBottom:6}},
+          "Data Management"),
+        e("div",{style:{fontSize:11,color:C.tx2,marginBottom:10}},
+          entries.length+" entries stored locally ("+
+          entries.filter(e=>e.status==="sent").length+" synced)"),
+        e("button",{onClick:clearAll,style:{
+          ...IS.btn(C.redl,C.red),border:`1px solid ${C.red}`}},
+          "Clear all local entries")
+      ),
+
+      e("div",{style:{...IS.card,background:C.bg}},
+        e("div",{style:{fontSize:10,color:C.tx3,textAlign:"center",lineHeight:1.6}},
+          "Quality Cost Tracker v1.0",e("br"),
+          "Makurai Ziko — Proposed Residential Development",e("br"),
+          "Yenagoa LGA, Bayelsa State",e("br"),
+          "BOQ Total Budget: ₦"+fmt(TOTAL_BUDGET),e("br"),
+          "Prepared by PFTC Global Resources Limited")
       )
     )
   );
 }
 
-ReactDOM.render(React.createElement(App), document.getElementById("root"));
+ReactDOM.createRoot(document.getElementById("root")).render(e(App));
 </script>
+</body>
+</html>
