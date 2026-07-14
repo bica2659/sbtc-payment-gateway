@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Sunville Platform — Powered by PFTC</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --g:#1F6E43;--g2:#155232;--gl:#E8F5E9;--g3:#DCFCE7;
+  --nav:#1A2E4A;--nav2:#0F1E32;--navl:rgba(26,46,74,.08);
+  --gold:#C9963B;--goldl:#FEF3C7;
+  --bg:#F2F5FA;--card:#fff;--bdr:#DDE3ED;
+  --tx:#1E293B;--tx2:#64748B;--tx3:#94A3B8;
+  --red:#DC2626;--redl:#FEE2E2;
+  --amb:#B45309;--ambl:#FEF9EF;
+  --sky:#0369A1;--skyl:#E0F2FE;
+  --pur:#7C3AED;--purl:#F5F3FF;
+  --r:10px;--r2:6px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  background:var(--bg);color:var(--tx);font-size:13px;min-height:100vh}
+select,input,textarea{font-family:inherit;font-size:13px;color:var(--tx)}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--bdr);overflow:hidden}
+.inp{width:100%;padding:9px 11px;border:1.5px solid var(--bdr);border-radius:var(--r2);
+  font-size:13px;background:var(--card);color:var(--tx);outline:none}
+.inp:focus{border-color:var(--g)}
+.sel{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.lbl{font-size:11px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:4px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;
+  border-radius:var(--r2);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s;width:100%}
+.btn:active{opacity:.8}
+.btn-g{background:var(--g);color:#fff}
+.btn-nav{background:var(--nav);color:#fff}
+.btn-sec{background:var(--gl);color:var(--g);border:1px solid var(--g)}
+.btn-ghost{background:transparent;color:var(--tx2);border:1px solid var(--bdr)}
+.btn-sm{padding:5px 10px;font-size:11px;font-weight:600;border-radius:4px;cursor:pointer;border:none}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-g{background:var(--gl);color:var(--g2)}
+.badge-amb{background:var(--ambl);color:var(--amb)}
+.badge-red{background:var(--redl);color:var(--red)}
+.badge-sky{background:var(--skyl);color:var(--sky)}
+.badge-nav{background:var(--navl);color:var(--nav)}
+.badge-pur{background:var(--purl);color:var(--pur)}
+.badge-gold{background:var(--goldl);color:var(--gold)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.row{display:flex;gap:8px;align-items:center}
+.col{flex:1;min-width:0}
+.pg{padding:12px 16px 32px}
+.sec{font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.1em;
+  display:flex;align-items:center;gap:8px;margin:14px 0 8px}
+.sec::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.hdr{padding:12px 16px 10px}
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--bdr);overflow-x:auto}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:10px 14px;font-size:12px;font-weight:600;background:none;border:none;
+  border-bottom:2px solid transparent;color:var(--tx2);cursor:pointer;white-space:nowrap}
+.tab.on{color:var(--g);border-bottom-color:var(--g)}
+.stat-row{display:flex;gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border-radius:var(--r);border:1px solid var(--bdr);padding:12px;flex:1;min-width:0}
+.stat-n{font-size:20px;font-weight:700;color:var(--g)}
+.stat-l{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
+.bar-t{height:5px;background:var(--bdr);border-radius:3px;overflow:hidden;margin-top:6px}
+.bar-f{height:100%;border-radius:3px;transition:width .3s}
+.toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);
+  padding:9px 18px;border-radius:20px;font-size:12px;font-weight:600;
+  white-space:nowrap;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.empty{text-align:center;padding:40px 16px;color:var(--tx2)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;background:var(--bg);color:var(--tx2);border:1px solid var(--bdr)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+'use strict';
+const {useState,useEffect,useMemo,useCallback}=React;
+const h=React.createElement;
+const fmtN=n=>(Number(n)||0).toLocaleString('en-NG');
+const fmtM=n=>{const v=Number(n)||0;return v>=1e9?(v/1e9).toFixed(1)+'B':v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':String(v)};
+const today=()=>new Date().toISOString().split('T')[0];
+
+// ── SAMPLE DATA ────────────────────────────────────────────────────────────
+const PROPERTIES=[
+  {id:'P001',estate:'Amber Estate',block:'Block A',unit:'Unit 3',type:'3-Bedroom Flat',floor:2,zone:'GRA',status:'Occupied',clientId:'C001',sqm:145,buildCost:18500000,listPrice:35000000,sc:250000},
+  {id:'P002',estate:'Amber Estate',block:'Block B',unit:'Unit 1',type:'2-Bedroom Flat',floor:1,zone:'GRA',status:'Available',clientId:null,sqm:98,buildCost:12200000,listPrice:22000000,sc:180000},
+  {id:'P003',estate:'Amethyst Court',block:'Block A',unit:'Unit 2',type:'3-Bedroom Flat',floor:1,zone:'GRA',status:'Occupied',clientId:'C002',sqm:142,buildCost:17800000,listPrice:34000000,sc:250000},
+  {id:'P004',estate:'Amethyst Court',block:'Block B',unit:'Unit 4',type:'2-Bedroom Flat',floor:2,zone:'GRA',status:'Reserved',clientId:'C003',sqm:95,buildCost:11900000,listPrice:21500000,sc:180000},
+  {id:'P005',estate:'Aquamarine Heights',block:'Block A',unit:'Unit 1',type:'Duplex',floor:1,zone:'GRA',status:'Occupied',clientId:'C004',sqm:220,buildCost:28000000,listPrice:55000000,sc:350000},
+  {id:'P006',estate:'Aquamarine Heights',block:'Block B',unit:'Unit 2',type:'3-Bedroom Flat',floor:1,zone:'GRA',status:'Available',clientId:null,sqm:140,buildCost:17500000,listPrice:33500000,sc:250000},
+  {id:'P007',estate:'Jade Court',block:'Block A',unit:'Unit 5',type:'3-Bedroom Flat',floor:3,zone:'Odili Road',status:'Occupied',clientId:'C005',sqm:138,buildCost:15200000,listPrice:28000000,sc:250000},
+  {id:'P008',estate:'Jade Court',block:'Block B',unit:'Unit 2',type:'2-Bedroom Flat',floor:2,zone:'Odili Road',status:'Occupied',clientId:'C006',sqm:92,buildCost:10100000,listPrice:18500000,sc:180000},
+  {id:'P009',estate:'Black Opal Estate',block:'Block A',unit:'Unit 1',type:'Duplex',floor:1,zone:'Odili Road',status:'Reserved',clientId:'C007',sqm:215,buildCost:24500000,listPrice:48000000,sc:350000},
+  {id:'P010',estate:'Tanzanite Gardens',block:'Block A',unit:'Unit 3',type:'3-Bedroom Flat',floor:2,zone:'GRA',status:'Under Construction',clientId:'C008',sqm:148,buildCost:null,listPrice:38000000,sc:250000,pct:72,eta:'October 2026'},
+  {id:'P011',estate:'Citrine Park',block:'Block B',unit:'Unit 1',type:'2-Bedroom Flat',floor:1,zone:'Odili Road',status:'Under Construction',clientId:null,sqm:96,buildCost:null,listPrice:20000000,sc:180000,pct:45,eta:'December 2026'},
+  {id:'P012',estate:'Moonstone View',block:'Block C',unit:'Unit 4',type:'Duplex',floor:1,zone:'GRA',status:'Under Construction',clientId:null,sqm:225,buildCost:null,listPrice:58000000,sc:350000,pct:88,eta:'August 2026'},
+];
+const CLIENTS=[
+  {id:'C001',name:'Chief Emmanuel Okafor',phone:'08033451289',propId:'P001',scBal:0,scStatus:'Current'},
+  {id:'C002',name:'Mrs. Adaeze Nwosu',phone:'08157823456',propId:'P003',scBal:250000,scStatus:'Overdue'},
+  {id:'C003',name:'Mr. Babatunde Adeyemi',phone:'09012345678',propId:'P004',scBal:0,scStatus:'Reserved'},
+  {id:'C004',name:'Engr. Chukwuemeka Eze',phone:'08098765432',propId:'P005',scBal:350000,scStatus:'Overdue'},
+  {id:'C005',name:'Dr. Funmilayo Balogun',phone:'07012349876',propId:'P007',scBal:0,scStatus:'Current'},
+  {id:'C006',name:'Mr. Kenneth Obiora',phone:'08167894321',propId:'P008',scBal:0,scStatus:'Current'},
+  {id:'C007',name:'Alhaja Fatima Danjuma',phone:'08023456789',propId:'P009',scBal:0,scStatus:'Deposit Paid'},
+  {id:'C008',name:'Mr. Rotimi Fashola',phone:'09087654321',propId:'P010',scBal:0,scStatus:'Off-Plan Buyer'},
+];
+const CONTRACTORS=[
+  {id:'CN001',name:'BrightSpark Electrical',trade:'Electrical',contact:'08033211234',rate:'₦15,000/day + mat.',jobs:12,rating:4.5},
+  {id:'CN002',name:'AquaFix Plumbing',trade:'Plumbing',contact:'07045678901',rate:'₦12,000/day + mat.',jobs:8,rating:4.2},
+  {id:'CN003',name:'PowerGen Solutions',trade:'Generator Maintenance',contact:'08123456789',rate:'₦25,000/visit',jobs:6,rating:4.8},
+  {id:'CN004',name:'Rusik Wash',trade:'Laundry & Dry Cleaning',contact:'08067891234',rate:'₦5,000/collect + per item',jobs:15,rating:4.9,note:'⭐ Preferred Partner'},
+  {id:'CN005',name:'SparkleClean Services',trade:'General Cleaning',contact:'09034567890',rate:'₦8,000/visit',jobs:22,rating:4.0},
+  {id:'CN006',name:'ShieldGuard Security',trade:'Security',contact:'08045678123',rate:'₦180,000/month',jobs:3,rating:4.6},
+  {id:'CN007',name:'ColourPro Painters',trade:'Painting & Decoration',contact:'07089012345',rate:'₦8,000/day + mat.',jobs:5,rating:4.3},
+  {id:'CN008',name:'BuildRight Maintenance',trade:'General Maintenance',contact:'08112345678',rate:'₦10,000/day + mat.',jobs:18,rating:4.4},
+];
+const JOBS=[
+  {id:'J001',propId:'P005',clientId:'C004',cat:'Generator Maintenance',priority:'Emergency',desc:'Generator failed to start. Estate without power backup for 12+ hours.',cnId:'CN003',status:'In Progress',raised:'2026-07-06',cost:25000},
+  {id:'J002',propId:'P003',clientId:'C002',cat:'Plumbing',priority:'Urgent',desc:'Leaking pipe under kitchen sink. Water pooling on floor.',cnId:'CN002',status:'Dispatched',raised:'2026-07-06',cost:18500},
+  {id:'J003',propId:'P001',clientId:'C001',cat:'Laundry & Dry Cleaning',priority:'Routine',desc:'Weekly laundry collection — curtains, upholstery covers and bedding.',cnId:'CN004',status:'Completed',raised:'2026-07-05',cost:22000,rating:5},
+  {id:'J004',propId:'P007',clientId:'C005',cat:'Electrical',priority:'Routine',desc:'Replacement of 4 recessed LED lights in living room and master bedroom.',cnId:'CN001',status:'Scheduled',raised:'2026-07-07',cost:12000},
+  {id:'J005',propId:'P008',clientId:'C006',cat:'General Cleaning',priority:'Routine',desc:'Monthly deep clean of all rooms, balconies and storage.',cnId:'CN005',status:'Completed',raised:'2026-07-03',cost:8000,rating:4},
+  {id:'J006',propId:'P001',clientId:'C001',cat:'General Maintenance',priority:'Urgent',desc:'Front door lock stiff and difficult to operate. Security concern.',cnId:null,status:'Pending Assignment',raised:'2026-07-07',cost:null},
+  {id:'J007',propId:'P005',clientId:'C004',cat:'Laundry & Dry Cleaning',priority:'Routine',desc:'Monthly laundry — duplex bulk load including drapes and cushion covers.',cnId:'CN004',status:'Scheduled',raised:'2026-07-07',cost:38000},
+];
+const VEHICLES=[
+  {id:'V001',reg:'RSH-456-XY',type:'Pickup Truck',make:'Toyota Hilux',assigned:'Facility Team',fuel:'Diesel',lastSvc:'2026-05-15',nextSvc:'2026-08-15',status:'Active',km:87450},
+  {id:'V002',reg:'RSH-789-QK',type:'Saloon Car',make:'Toyota Corolla',assigned:'Head QS — Adegoke Clever',fuel:'Petrol',lastSvc:'New Vehicle',nextSvc:'2026-10-01',status:'Active',km:0},
+];
+const SC_INVOICES=[
+  {id:'SC001',clientId:'C001',propId:'P001',amt:250000,period:'Jan–Dec 2026',issued:'2026-01-05',paid:'2026-01-28',status:'Paid'},
+  {id:'SC002',clientId:'C002',propId:'P003',amt:250000,period:'Jan–Dec 2026',issued:'2026-01-05',paid:null,status:'Overdue'},
+  {id:'SC003',clientId:'C004',propId:'P005',amt:350000,period:'Jan–Dec 2026',issued:'2026-01-05',paid:null,status:'Overdue'},
+  {id:'SC004',clientId:'C005',propId:'P007',amt:250000,period:'Jan–Dec 2026',issued:'2026-01-05',paid:'2026-02-10',status:'Paid'},
+  {id:'SC005',clientId:'C006',propId:'P008',amt:180000,period:'Jan–Dec 2026',issued:'2026-01-05',paid:'2026-01-30',status:'Paid'},
+];
+const LEADS=[
+  {id:'L001',name:'Mr. Ifeanyi Obi',phone:'08134567890',interest:'3-Bedroom Flat, GRA',budget:'₦30M–₦40M',stage:'Viewing Scheduled',date:'2026-07-10',note:'Referred by Chief Okafor (C001)'},
+  {id:'L002',name:'Mrs. Blessing Nnadi',phone:'09023456781',interest:'Duplex, any zone',budget:'₦45M+',stage:'Negotiation',date:'2026-07-05',note:'Ready to deposit on Moonstone (P012)'},
+  {id:'L003',name:'Engr. Samuel Taiwo',phone:'08067890123',interest:'2-Bed, Odili Road',budget:'₦18M–₦22M',stage:'First Contact',date:'2026-07-07',note:'Walk-in. Interested in Citrine P011'},
+];
+const PAY_PLANS=[
+  {id:'PP001',clientId:'C007',propId:'P009',type:'Deposit + Balance',total:48000000,
+   items:[{label:'Initial Deposit (30%)',amount:14400000,paid:true,date:'2026-04-05'},
+          {label:'Balance (70%)',amount:33600000,paid:false,due:'2026-09-01'}]},
+  {id:'PP002',clientId:'C008',propId:'P010',type:'5-Installment Off-Plan',total:38000000,
+   items:[{label:'Instalment 1 of 5',amount:7600000,paid:true,date:'2025-07-15'},
+          {label:'Instalment 2 of 5',amount:7600000,paid:true,date:'2025-10-12'},
+          {label:'Instalment 3 of 5',amount:7600000,paid:true,date:'2026-01-08'},
+          {label:'Instalment 4 of 5',amount:7600000,paid:true,date:'2026-04-03'},
+          {label:'Instalment 5 of 5',amount:7600000,paid:false,due:'2026-07-31'}]},
+];
+
+// ── STATUS CONFIG ─────────────────────────────────────────────────────────
+const priorityBadge=p=>p==='Emergency'?'badge-red':p==='Urgent'?'badge-amb':'badge-sky';
+const statusBadge=s=>{
+  if(s==='Completed')return'badge-g';
+  if(s==='In Progress')return'badge-amb';
+  if(s==='Dispatched')return'badge-sky';
+  if(s==='Scheduled')return'badge-nav';
+  if(s==='Pending Assignment')return'badge-red';
+  return'badge-nav';
+};
+const propStatusBadge=s=>{
+  if(s==='Occupied')return'badge-g';
+  if(s==='Available')return'badge-sky';
+  if(s==='Reserved')return'badge-gold';
+  if(s==='Under Construction')return'badge-amb';
+  return'badge-nav';
+};
+const stars=n=>'★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n));
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function Toast({t}){
+  if(!t)return null;
+  return h('div',{className:'toast',style:{background:t.err?'#DC2626':t.gold?'#C9963B':'#1F6E43',color:'#fff'}},t.msg);
+}
+
+// ── PLATFORM LANDING ──────────────────────────────────────────────────────
+function PlatformLanding({onModule}){
+  const openJobs=JOBS.filter(j=>j.status!=='Completed').length;
+  const scOutstanding=SC_INVOICES.filter(i=>i.status==='Overdue').reduce((s,i)=>s+i.amt,0);
+  const activeLeads=LEADS.filter(l=>l.stage!=='Closed').length;
+  const totalPortfolio=PROPERTIES.filter(p=>p.listPrice).reduce((s,p)=>s+p.listPrice,0);
+
+  const modules=[
+    {key:'facility',icon:'🏢',label:'Facility Management',sub:'Maintenance · Service Charges · Contractors',
+     stats:[`${openJobs} open jobs`,`₦${fmtM(scOutstanding)} SC outstanding`],color:'var(--g)'},
+    {key:'sales',icon:'🏠',label:'Sales & Listings',sub:'Properties · Buyers · Payment Plans · Pipeline',
+     stats:[`${PROPERTIES.filter(p=>p.status==='Available').length} available`,`${activeLeads} active leads`],color:'var(--nav)'},
+    {key:'construction',icon:'🏗',label:'FieldLedger Construction',sub:'Wage Bills · Cost Tracking · 24 Active Sites',
+     stats:['24 active sites','₦226M+ tracked'],color:'var(--amb)'},
+    {key:'dashboard',icon:'📊',label:'Management Dashboard',sub:'Cross-module overview for COO & MD',
+     stats:['All modules','Executive view'],color:'var(--pur)'},
+  ];
+
+  return h('div',{style:{background:var('--bg'),minHeight:'100vh'}},
+    h('div',{style:{background:`linear-gradient(135deg,var(--nav) 0%,var(--nav2) 100%)`,padding:'24px 20px 20px'}},
+      h('div',{style:{fontSize:10,color:'rgba(255,255,255,.4)',letterSpacing:'.18em',textTransform:'uppercase',marginBottom:6}},
+        'Powered by PFTC Global Resources Limited'),
+      h('div',{style:{fontSize:28,fontWeight:800,color:'#fff',letterSpacing:'-.5px',marginBottom:2}},'Sunville Platform'),
+      h('div',{style:{fontSize:13,color:'rgba(255,255,255,.5)',marginBottom:20}},'Enterprise Operations · Facility · Sales'),
+      h('div',{className:'g2',style:{gap:8}},
+        [{label:'Total Portfolio',val:'₦'+fmtM(totalPortfolio),sub:'Listed value'},
+         {label:'Properties',val:String(PROPERTIES.length),sub:PROPERTIES.filter(p=>p.status==='Occupied').length+' occupied'},
+         {label:'Open Jobs',val:String(openJobs),sub:JOBS.filter(j=>j.priority==='Emergency'||j.priority==='Urgent').length+' urgent'},
+         {label:'SC Arrears',val:'₦'+fmtM(scOutstanding),sub:SC_INVOICES.filter(i=>i.status==='Overdue').length+' overdue'},
+        ].map(s=>h('div',{key:s.label,style:{background:'rgba(255,255,255,.07)',borderRadius:8,padding:'10px 12px'}},
+          h('div',{style:{fontSize:9,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:2}},s.label),
+          h('div',{style:{fontSize:18,fontWeight:700,color:'var(--gold)'}},s.val),
+          h('div',{style:{fontSize:10,color:'rgba(255,255,255,.35)'}},s.sub)
+        ))
+      )
+    ),
+    h('div',{style:{padding:'16px'}},
+      modules.map(m=>h('div',{key:m.key,
+        style:{background:'var(--card)',borderRadius:12,border:'1px solid var(--bdr)',
+          marginBottom:10,overflow:'hidden',cursor:'pointer'},
+        onClick:()=>onModule(m.key)},
+        h('div',{style:{display:'flex',alignItems:'center',gap:14,padding:'16px 16px 12px'}},
+          h('div',{style:{width:48,height:48,borderRadius:12,background:m.color,
+            display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}},m.icon),
+          h('div',{style:{flex:1}},
+            h('div',{style:{fontSize:15,fontWeight:700,color:'var(--tx)',marginBottom:3}},m.label),
+            h('div',{style:{fontSize:12,color:'var(--tx2)'}},m.sub)
+          ),
+          h('div',{style:{fontSize:18,color:'var(--tx3)'}},'\u203A')
+        ),
+        h('div',{style:{display:'flex',gap:8,padding:'0 16px 14px'}},
+          m.stats.map(s=>h('span',{key:s,className:'chip'},s))
+        )
+      )),
+      h('div',{style:{background:'var(--gl)',borderRadius:12,border:'1px solid var(--g)',padding:'14px 16px',marginTop:6}},
+        h('div',{style:{fontSize:11,fontWeight:700,color:'var(--g2)',marginBottom:6}},
+          '⭐ PFTC Platform Retainer — ₦200,000 / month'),
+        h('div',{style:{fontSize:11,color:'var(--tx2)',lineHeight:1.7}},
+          'The monthly retainer funds active management of all three operational modules — FieldLedger, Facility Management, and Sales. '+
+          'It covers live data pipeline maintenance across all Google Sheets, user and PIN management for 24+ sites, '+
+          'system updates as Sunville\'s portfolio grows, new property onboarding, monthly platform performance reporting, '+
+          'priority support for operational issues, and ongoing refinements. '+
+          'The retainer is not a software licence — it is the cost of keeping your operational data clean, current, and actionable every single day.')
+      )
+    )
+  );
+}
+// Helper for CSS var in JS
+function var_(v){return `var(${v})`}
+function var__(v){return 'var('+v+')'}
+
+// ── FACILITY MODULE ───────────────────────────────────────────────────────
+function FacilityModule({onBack}){
+  const [tab,setTab]=useState('jobs');
+  const [expandedJob,setExpandedJob]=useState(null);
+  const [newJobProp,setNewJobProp]=useState('');
+  const [newJobCat,setNewJobCat]=useState('');
+  const [newJobDesc,setNewJobDesc]=useState('');
+  const [newJobPri,setNewJobPri]=useState('Routine');
+  const [newJobCn,setNewJobCn]=useState('');
+  const [jobs,setJobs]=useState(JOBS);
+  const [toast,setToast]=useState(null);
+  const [showAdd,setShowAdd]=useState(false);
+
+  const showT=(msg,err=false)=>{setToast({msg,err});setTimeout(()=>setToast(null),2800)};
+
+  const openJobs=jobs.filter(j=>j.status!=='Completed');
+  const emergent=jobs.filter(j=>j.priority==='Emergency'&&j.status!=='Completed');
+
+  const clientOf=cid=>CLIENTS.find(c=>c.id===cid);
+  const propOf=pid=>PROPERTIES.find(p=>p.id===pid);
+  const cnOf=cnid=>CONTRACTORS.find(c=>c.id===cnid);
+
+  const addJob=()=>{
+    if(!newJobProp||!newJobCat||!newJobDesc.trim())return showT('Fill property, category and description',true);
+    const j={id:'J'+Date.now(),propId:newJobProp,clientId:propOf(newJobProp)?.clientId||null,
+      cat:newJobCat,priority:newJobPri,desc:newJobDesc,cnId:newJobCn||null,
+      status:newJobCn?'Scheduled':'Pending Assignment',raised:today(),cost:null};
+    setJobs(p=>[j,...p]);
+    setShowAdd(false);setNewJobProp('');setNewJobCat('');setNewJobDesc('');setNewJobCn('');
+    showT('Job ticket created — '+j.id);
+  };
+
+  const updateStatus=(id,status)=>{
+    setJobs(p=>p.map(j=>j.id===id?{...j,status}:j));
+    showT('Status updated to '+status);
+  };
+
+  const CATS=['Electrical','Plumbing','Generator Maintenance','Laundry & Dry Cleaning',
+              'General Cleaning','Security','Painting & Decoration','General Maintenance','Structural'];
+
+  return h('div',{style:{background:'var(--bg)',minHeight:'100vh'}},
+    h(Toast,{t:toast}),
+    h('div',{className:'hdr',style:{background:'var(--g)'}},
+      h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between'}},
+        h('div',null,
+          h('div',{style:{fontSize:16,fontWeight:700,color:'#fff'}},'🏢 Facility Management'),
+          h('div',{style:{fontSize:11,color:'rgba(255,255,255,.6)'}},'Maintenance · Service Charges · Contractors')
+        ),
+        h('button',{style:{background:'rgba(255,255,255,.15)',color:'#fff',padding:'5px 12px',
+          borderRadius:20,fontSize:11,fontWeight:600,cursor:'pointer',border:'none'},onClick:onBack},'← Back')
+      ),
+      h('div',{style:{display:'flex',gap:8,marginTop:10}},
+        [{v:openJobs.length,l:'Open Jobs'},{v:emergent.length,l:'Emergency'},{v:SC_INVOICES.filter(i=>i.status==='Overdue').length,l:'SC Overdue'}].map(s=>
+          h('div',{key:s.l,style:{background:'rgba(255,255,255,.1)',borderRadius:6,padding:'6px 12px',textAlign:'center'}},
+            h('div',{style:{fontSize:16,fontWeight:700,color:s.l==='Emergency'&&s.v>0?'#FCA5A5':'#fff'}},s.v),
+            h('div',{style:{fontSize:9,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.08em'}},s.l)
+          )
+        )
+      )
+    ),
+    h('div',{className:'tabs'},
+      [['jobs','📋 Jobs'],['properties','🏠 Properties'],['service-charges','💳 Service Charges'],
+       ['contractors','🔧 Contractors'],['vehicles','🚗 Vehicles']].map(([t,l])=>
+        h('button',{key:t,className:'tab '+(tab===t?'on':''),onClick:()=>setTab(t)},l)
+      )
+    ),
+
+    // ── JOBS ───────────────────────────────────────────────────────────────
+    tab==='jobs'&&h('div',{className:'pg'},
+      h('button',{className:'btn btn-g',style:{marginBottom:10},onClick:()=>setShowAdd(s=>!s)},
+        showAdd?'✕ Close':'+ New Job Ticket'),
+      showAdd&&h('div',{className:'card',style:{padding:'14px',marginBottom:12}},
+        h('div',{className:'lbl',style:{marginBottom:8}},'New Maintenance Request'),
+        h('div',{style:{marginBottom:8}},
+          h('label',{className:'lbl'},'Property'),
+          h('select',{className:'inp sel',value:newJobProp,onChange:e=>setNewJobProp(e.target.value)},
+            h('option',{value:''},'— Select property —'),
+            PROPERTIES.filter(p=>p.status!=='Under Construction').map(p=>
+              h('option',{key:p.id,value:p.id},`${p.estate} ${p.block} ${p.unit}`)
+            )
+          )
+        ),
+        h('div',{className:'g2',style:{marginBottom:8}},
+          h('div',null,h('label',{className:'lbl'},'Category'),
+            h('select',{className:'inp sel',value:newJobCat,onChange:e=>setNewJobCat(e.target.value)},
+              h('option',{value:''},'— Category —'),
+              CATS.map(c=>h('option',{key:c,value:c},c))
+            )
+          ),
+          h('div',null,h('label',{className:'lbl'},'Priority'),
+            h('select',{className:'inp sel',value:newJobPri,onChange:e=>setNewJobPri(e.target.value)},
+              ['Emergency','Urgent','Routine'].map(p=>h('option',{key:p,value:p},p))
+            )
+          )
+        ),
+        h('div',{style:{marginBottom:8}},
+          h('label',{className:'lbl'},'Description'),
+          h('textarea',{className:'inp',rows:2,value:newJobDesc,
+            placeholder:'Describe the issue or task...',
+            onChange:e=>setNewJobDesc(e.target.value),style:{resize:'none'}})
+        ),
+        h('div',{style:{marginBottom:10}},
+          h('label',{className:'lbl'},'Assign Contractor'),
+          h('select',{className:'inp sel',value:newJobCn,onChange:e=>setNewJobCn(e.target.value)},
+            h('option',{value:''},'— Assign later —'),
+            CONTRACTORS.map(c=>h('option',{key:c.id,value:c.id},
+              `${c.name} — ${c.trade}${c.note?' ⭐':''}`)
+            )
+          )
+        ),
+        h('button',{className:'btn btn-g',onClick:addJob},'Create Job Ticket')
+      ),
+      jobs.map(j=>{
+        const prop=propOf(j.propId);
+        const client=j.clientId?clientOf(j.clientId):null;
+        const cn=j.cnId?cnOf(j.cnId):null;
+        const isExp=expandedJob===j.id;
+        return h('div',{key:j.id,className:'card',style:{marginBottom:8}},
+          h('div',{style:{padding:'12px 14px',cursor:'pointer'},onClick:()=>setExpandedJob(isExp?null:j.id)},
+            h('div',{style:{display:'flex',gap:6,marginBottom:6,flexWrap:'wrap'}},
+              h('span',{className:'badge '+priorityBadge(j.priority)},j.priority),
+              h('span',{className:'badge '+statusBadge(j.status)},j.status),
+              h('span',{className:'badge badge-nav'},j.cat)
+            ),
+            h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}},
+              h('div',{style:{flex:1}},
+                h('div',{style:{fontSize:12,fontWeight:600,marginBottom:2}},prop?`${prop.estate} · ${prop.block} ${prop.unit}`:''),
+                h('div',{style:{fontSize:11,color:'var(--tx2)',marginBottom:client?2:0}},j.desc.substring(0,70)+(j.desc.length>70?'…':'')),
+                client&&h('div',{style:{fontSize:11,color:'var(--tx3)'}},client.name)
+              ),
+              h('div',{style:{textAlign:'right',flexShrink:0,marginLeft:8}},
+                cn&&h('div',{style:{fontSize:11,fontWeight:600,color:'var(--g)',marginBottom:2}},cn.name),
+                j.cost&&h('div',{style:{fontSize:12,fontWeight:700,color:'var(--tx)'}},
+                  '₦'+fmtN(j.cost)),
+                j.rating&&h('div',{style:{fontSize:10,color:'var(--gold)'}},stars(j.rating))
+              )
+            )
+          ),
+          isExp&&h('div',{style:{borderTop:'1px solid var(--bdr)',padding:'12px 14px',background:'var(--bg)'}},
+            h('div',{style:{fontSize:12,marginBottom:10}},j.desc),
+            cn&&h('div',{style:{background:'var(--card)',borderRadius:6,padding:'8px 10px',marginBottom:8}},
+              h('div',{style:{fontSize:11,fontWeight:600,color:'var(--g)',marginBottom:2}},cn.name),
+              h('div',{style:{fontSize:11,color:'var(--tx2)'}},cn.trade+' · '+cn.contact),
+              h('div',{style:{fontSize:11,color:'var(--tx2)'}},cn.rate),
+              cn.note&&h('div',{style:{fontSize:11,color:'var(--gold)',fontWeight:600}},cn.note)
+            ),
+            h('div',{style:{fontSize:11,color:'var(--tx2)',marginBottom:8}},
+              'Raised: '+j.raised+' · Job: '+j.id),
+            j.status!=='Completed'&&h('div',{style:{display:'flex',gap:6,flexWrap:'wrap'}},
+              ['Dispatched','In Progress','Completed'].map(s=>
+                h('button',{key:s,className:'btn-sm',
+                  style:{background:s==='Completed'?'var(--gl)':s==='In Progress'?'var(--ambl)':'var(--skyl)',
+                    color:s==='Completed'?'var(--g)':s==='In Progress'?'var(--amb)':'var(--sky)'},
+                  onClick:()=>updateStatus(j.id,s)},
+                  'Mark '+s
+                )
+              )
+            )
+          )
+        );
+      })
+    ),
+
+    // ── PROPERTIES ─────────────────────────────────────────────────────────
+    tab==='properties'&&h('div',{className:'pg'},
+      h('div',{className:'stat-row'},
+        [{l:'Total Units',v:PROPERTIES.length},{l:'Occupied',v:PROPERTIES.filter(p=>p.status==='Occupied').length},
+         {l:'Available',v:PROPERTIES.filter(p=>p.status==='Available').length}].map(s=>
+          h('div',{key:s.l,className:'stat'},
+            h('div',{className:'stat-n'},s.v),
+            h('div',{className:'stat-l'},s.l)
+          )
+        )
+      ),
+      PROPERTIES.map(p=>{
+        const client=p.clientId?clientOf(p.clientId):null;
+        const openCount=jobs.filter(j=>j.propId===p.id&&j.status!=='Completed').length;
+        const propSC=SC_INVOICES.find(sc=>sc.propId===p.id);
+        return h('div',{key:p.id,className:'card',style:{padding:'12px 14px',marginBottom:8}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}},
+            h('div',{style:{flex:1}},
+              h('div',{style:{display:'flex',gap:6,marginBottom:4,flexWrap:'wrap'}},
+                h('span',{className:'badge '+propStatusBadge(p.status)},p.status),
+                h('span',{className:'badge badge-nav'},p.zone)
+              ),
+              h('div',{style:{fontSize:13,fontWeight:700,marginBottom:1}},p.estate),
+              h('div',{style:{fontSize:12,color:'var(--tx2)',marginBottom:2}},
+                `${p.block} · ${p.unit} · ${p.type}`),
+              client&&h('div',{style:{fontSize:11,color:'var(--tx3)'}},client.name)
+            ),
+            h('div',{style:{textAlign:'right',flexShrink:0,marginLeft:8}},
+              openCount>0&&h('div',{className:'badge badge-amb',style:{marginBottom:4}},
+                openCount+' open job'+(openCount>1?'s':'')),
+              p.status==='Under Construction'&&h('div',null,
+                h('div',{style:{fontSize:11,fontWeight:600,color:'var(--amb)'}},p.pct+'% complete'),
+                h('div',{style:{fontSize:10,color:'var(--tx3)'}},p.eta)
+              ),
+              propSC&&h('div',{style:{marginTop:4}},
+                h('span',{className:'badge '+(propSC.status==='Paid'?'badge-g':'badge-red')},
+                  'SC: '+propSC.status)
+              )
+            )
+          ),
+          p.status==='Under Construction'&&h('div',{className:'bar-t',style:{marginTop:8}},
+            h('div',{className:'bar-f',style:{width:p.pct+'%',background:'var(--amb)'}})
+          )
+        );
+      })
+    ),
+
+    // ── SERVICE CHARGES ────────────────────────────────────────────────────
+    tab==='service-charges'&&h('div',{className:'pg'},
+      h('div',{className:'stat-row'},
+        [{l:'Total Billed',v:'₦'+fmtM(SC_INVOICES.reduce((s,i)=>s+i.amt,0))},
+         {l:'Collected',v:'₦'+fmtM(SC_INVOICES.filter(i=>i.status==='Paid').reduce((s,i)=>s+i.amt,0))},
+         {l:'Outstanding',v:'₦'+fmtM(SC_INVOICES.filter(i=>i.status==='Overdue').reduce((s,i)=>s+i.amt,0))}].map(s=>
+          h('div',{key:s.l,className:'stat'},
+            h('div',{className:'stat-n',style:{fontSize:16}},s.v),
+            h('div',{className:'stat-l'},s.l)
+          )
+        )
+      ),
+      h('div',{className:'bar-t',style:{height:8,marginBottom:16}},
+        h('div',{className:'bar-f',style:{
+          width:Math.round(SC_INVOICES.filter(i=>i.status==='Paid').reduce((s,i)=>s+i.amt,0)/SC_INVOICES.reduce((s,i)=>s+i.amt,0)*100)+'%',
+          background:'var(--g)'
+        }})
+      ),
+      SC_INVOICES.map(inv=>{
+        const client=clientOf(inv.clientId);
+        const prop=propOf(inv.propId);
+        return h('div',{key:inv.id,className:'card',style:{padding:'12px 14px',marginBottom:8}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+            h('div',null,
+              h('div',{style:{fontSize:12,fontWeight:600,marginBottom:2}},client?.name),
+              h('div',{style:{fontSize:11,color:'var(--tx2)',marginBottom:2}},
+                prop?`${prop.estate} · ${prop.unit}`:''),
+              h('div',{style:{fontSize:11,color:'var(--tx3)'}},inv.period)
+            ),
+            h('div',{style:{textAlign:'right'}},
+              h('div',{style:{fontSize:14,fontWeight:700,color:'var(--tx)',marginBottom:4}},
+                '₦'+fmtN(inv.amt)),
+              h('span',{className:'badge '+(inv.status==='Paid'?'badge-g':'badge-red')},
+                inv.status),
+              inv.paid&&h('div',{style:{fontSize:10,color:'var(--tx3)',marginTop:4}},'Paid: '+inv.paid)
+            )
+          )
+        );
+      }),
+      h('div',{className:'card',style:{padding:'14px',marginTop:12,background:'var(--gl)',border:'1px solid var(--g)'}},
+        h('div',{style:{fontSize:11,fontWeight:700,color:'var(--g2)',marginBottom:4}},
+          'Service Charge Rate Schedule'),
+        [['2-Bedroom Flat','₦180,000 / year'],['3-Bedroom Flat','₦250,000 / year'],
+         ['Duplex','₦350,000 / year']].map(([t,r])=>
+          h('div',{key:t,style:{display:'flex',justifyContent:'space-between',
+            padding:'6px 0',borderBottom:'1px solid rgba(31,110,67,.15)'}},
+            h('span',{style:{fontSize:12,color:'var(--tx2)'}},t),
+            h('span',{style:{fontSize:12,fontWeight:600,color:'var(--g)'}},r)
+          )
+        )
+      )
+    ),
+
+    // ── CONTRACTORS ────────────────────────────────────────────────────────
+    tab==='contractors'&&h('div',{className:'pg'},
+      CONTRACTORS.map(cn=>
+        h('div',{key:cn.id,className:'card',style:{padding:'12px 14px',marginBottom:8}},
+          h('div',{style:{display:'flex',alignItems:'flex-start',gap:10}},
+            h('div',{style:{width:40,height:40,borderRadius:8,background:'var(--navl)',
+              display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},
+              cn.trade==='Laundry & Dry Cleaning'?'👕':
+              cn.trade==='Electrical'?'⚡':cn.trade==='Plumbing'?'🔧':
+              cn.trade==='Generator Maintenance'?'⚙':cn.trade==='Security'?'🛡':
+              cn.trade==='General Cleaning'?'🧹':'🔨'
+            ),
+            h('div',{style:{flex:1}},
+              h('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:2}},
+                h('div',{style:{fontSize:13,fontWeight:700}},cn.name),
+                cn.note&&h('span',{className:'badge badge-gold'},cn.note)
+              ),
+              h('div',{style:{fontSize:11,color:'var(--tx2)',marginBottom:2}},cn.trade),
+              h('div',{style:{fontSize:11,color:'var(--tx3)',marginBottom:4}},cn.contact+' · '+cn.rate),
+              h('div',{style:{display:'flex',gap:8}},
+                h('span',{style:{fontSize:11,color:'var(--gold)'}},stars(cn.rating)+' '+cn.rating),
+                h('span',{style:{fontSize:11,color:'var(--tx3)'}},cn.jobs+' jobs completed')
+              )
+            )
+          )
+        )
+      )
+    ),
+
+    // ── VEHICLES ───────────────────────────────────────────────────────────
+    tab==='vehicles'&&h('div',{className:'pg'},
+      VEHICLES.map(v=>
+        h('div',{key:v.id,className:'card',style:{padding:'14px',marginBottom:8}},
+          h('div',{style:{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap'}},
+            h('span',{className:'badge badge-g'},v.status),
+            h('span',{className:'badge badge-nav'},v.type)
+          ),
+          h('div',{style:{fontSize:14,fontWeight:700,marginBottom:2}},v.reg),
+          h('div',{style:{fontSize:13,color:'var(--tx2)',marginBottom:2}},v.make),
+          h('div',{style:{fontSize:12,color:'var(--tx2)',marginBottom:8}},
+            'Assigned: '+v.assigned),
+          h('div',{className:'g2',style:{gap:8}},
+            [{l:'Fuel',v:v.fuel},{l:'Mileage',v:fmtN(v.km)+' km'},
+             {l:'Last Service',v:v.lastSvc},{l:'Next Service',v:v.nextSvc}].map(s=>
+              h('div',{key:s.l,style:{background:'var(--bg)',borderRadius:6,padding:'7px 10px'}},
+                h('div',{style:{fontSize:10,color:'var(--tx3)',marginBottom:2}},s.l),
+                h('div',{style:{fontSize:12,fontWeight:600}},s.v)
+              )
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
+// ── SALES MODULE ──────────────────────────────────────────────────────────
+function SalesModule({onBack}){
+  const [tab,setTab]=useState('listings');
+  const [expandedPP,setExpandedPP]=useState(null);
+  const [expandedProp,setExpandedProp]=useState(null);
+  const [filterZone,setFilterZone]=useState('');
+  const [filterStatus,setFilterStatus]=useState('');
+
+  const clientOf=cid=>CLIENTS.find(c=>c.id===cid);
+  const propOf=pid=>PROPERTIES.find(p=>p.id===pid);
+  const ppOf=pid=>PAY_PLANS.find(pp=>pp.propId===pid);
+
+  const filteredProps=PROPERTIES.filter(p=>
+    (!filterZone||p.zone===filterZone)&&(!filterStatus||p.status===filterStatus)
+  );
+
+  const totalSalesValue=PROPERTIES.filter(p=>['Occupied','Reserved'].includes(p.status))
+    .reduce((s,p)=>s+p.listPrice,0);
+  const availableValue=PROPERTIES.filter(p=>p.status==='Available')
+    .reduce((s,p)=>s+p.listPrice,0);
+
+  // Sell vs shelve calculator
+  const calcMargin=(p)=>{
+    if(!p.buildCost)return null;
+    const facilityReserve=p.sc*10; // 10 year reserve
+    const cost=p.buildCost+facilityReserve;
+    const margin=p.listPrice-cost;
+    const marginPct=Math.round(margin/p.buildCost*100);
+    return{cost,margin,marginPct};
+  };
+
+  return h('div',{style:{background:'var(--bg)',minHeight:'100vh'}},
+    h('div',{className:'hdr',style:{background:'var(--nav)'}},
+      h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between'}},
+        h('div',null,
+          h('div',{style:{fontSize:16,fontWeight:700,color:'#fff'}},'🏠 Sales & Listings'),
+          h('div',{style:{fontSize:11,color:'rgba(255,255,255,.6)'}},'Properties · Buyers · Payment Plans')
+        ),
+        h('button',{style:{background:'rgba(255,255,255,.15)',color:'#fff',padding:'5px 12px',
+          borderRadius:20,fontSize:11,fontWeight:600,cursor:'pointer',border:'none'},onClick:onBack},'← Back')
+      ),
+      h('div',{style:{display:'flex',gap:8,marginTop:10}},
+        [{v:'₦'+fmtM(totalSalesValue),l:'Sold/Reserved'},{v:'₦'+fmtM(availableValue),l:'Available'},{v:LEADS.length,l:'Active Leads'}].map(s=>
+          h('div',{key:s.l,style:{background:'rgba(255,255,255,.1)',borderRadius:6,padding:'6px 12px',textAlign:'center'}},
+            h('div',{style:{fontSize:14,fontWeight:700,color:'var(--gold)'}},s.v),
+            h('div',{style:{fontSize:9,color:'rgba(255,255,255,.5)',textTransform:'uppercase',letterSpacing:'.08em'}},s.l)
+          )
+        )
+      )
+    ),
+    h('div',{className:'tabs'},
+      [['listings','🏘 Listings'],['pipeline','📊 Pipeline'],['buyers','💳 Buyers'],['pricing','💰 Pricing']].map(([t,l])=>
+        h('button',{key:t,className:'tab '+(tab===t?'on':''),onClick:()=>setTab(t)},l)
+      )
+    ),
+
+    // ── LISTINGS ───────────────────────────────────────────────────────────
+    tab==='listings'&&h('div',{className:'pg'},
+      h('div',{className:'g2',style:{marginBottom:10}},
+        h('select',{className:'inp sel',value:filterZone,onChange:e=>setFilterZone(e.target.value)},
+          h('option',{value:''},'All zones'),
+          ['GRA','Odili Road'].map(z=>h('option',{key:z,value:z},z))
+        ),
+        h('select',{className:'inp sel',value:filterStatus,onChange:e=>setFilterStatus(e.target.value)},
+          h('option',{value:''},'All statuses'),
+          ['Available','Occupied','Reserved','Under Construction'].map(s=>h('option',{key:s,value:s},s))
+        )
+      ),
+      filteredProps.map(p=>{
+        const pp=ppOf(p.id);
+        const isExp=expandedProp===p.id;
+        const margin=calcMargin(p);
+        return h('div',{key:p.id,className:'card',style:{marginBottom:10,overflow:'hidden'}},
+          // 3D Tour Banner for completed properties
+          p.status!=='Under Construction'&&h('div',{
+            style:{background:'linear-gradient(135deg,var(--nav) 0%,#2D4A6E 100%)',
+              padding:'16px 16px 12px',cursor:'pointer',position:'relative',overflow:'hidden'},
+            onClick:()=>setExpandedProp(isExp?null:p.id)},
+            h('div',{style:{position:'absolute',right:12,top:12,opacity:.12,fontSize:60}},
+              p.type.includes('Duplex')?'🏠':'🏢'),
+            h('div',{style:{position:'relative'}},
+              h('div',{style:{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap'}},
+                h('span',{className:'badge '+propStatusBadge(p.status)},p.status),
+                h('span',{className:'badge badge-nav'},p.zone),
+                h('span',{className:'badge',style:{background:'rgba(201,150,59,.2)',color:'var(--gold)'}},
+                  '🎬 3D Tour Available')
+              ),
+              h('div',{style:{fontSize:15,fontWeight:700,color:'#fff',marginBottom:2}},p.estate),
+              h('div',{style:{fontSize:12,color:'rgba(255,255,255,.6)'}},
+                `${p.block} · ${p.unit} · ${p.type} · ${p.sqm}sqm`)
+            )
+          ),
+          // Under construction view
+          p.status==='Under Construction'&&h('div',{
+            style:{background:'linear-gradient(135deg,var(--amb) 0%,#92400E 100%)',
+              padding:'14px 16px',cursor:'pointer'},
+            onClick:()=>setExpandedProp(isExp?null:p.id)},
+            h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},
+              h('div',null,
+                h('div',{style:{display:'flex',gap:6,marginBottom:6}},
+                  h('span',{className:'badge badge-amb'},p.status),
+                  h('span',{className:'badge badge-nav'},p.zone)
+                ),
+                h('div',{style:{fontSize:14,fontWeight:700,color:'#fff'}},p.estate),
+                h('div',{style:{fontSize:11,color:'rgba(255,255,255,.6)'}},
+                  `${p.block} · ${p.unit} · ${p.type}`)
+              ),
+              h('div',{style:{textAlign:'right'}},
+                h('div',{style:{fontSize:22,fontWeight:800,color:'#fff'}},p.pct+'%'),
+                h('div',{style:{fontSize:10,color:'rgba(255,255,255,.5)'}},p.eta)
+              )
+            ),
+            h('div',{style:{height:5,background:'rgba(255,255,255,.2)',borderRadius:3,overflow:'hidden'}},
+              h('div',{style:{height:'100%',width:p.pct+'%',background:'#fff',borderRadius:3}})
+            )
+          ),
+          // Price and details row
+          h('div',{style:{padding:'12px 14px'}},
+            h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:isExp?10:0}},
+              h('div',null,
+                h('div',{style:{fontSize:16,fontWeight:700,color:'var(--nav)'}},
+                  '₦'+fmtM(p.listPrice)),
+                h('div',{style:{fontSize:11,color:'var(--tx2)'}},
+                  'SC: ₦'+fmtN(p.sc)+'/yr')
+              ),
+              margin&&h('div',{style:{textAlign:'right'}},
+                h('div',{style:{fontSize:13,fontWeight:700,
+                  color:margin.marginPct>50?'var(--g)':margin.marginPct>20?'var(--amb)':'var(--red)'}},
+                  '+'+margin.marginPct+'% margin'),
+                h('div',{style:{fontSize:10,color:'var(--tx3)'}},
+                  '₦'+fmtM(margin.margin)+' gross')
+              )
+            ),
+            isExp&&h('div',null,
+              h('div',{style:{background:'var(--bg)',borderRadius:8,padding:'12px',marginBottom:8}},
+                h('div',{style:{fontSize:11,fontWeight:700,color:'var(--tx2)',marginBottom:8}},'Property Details'),
+                h('div',{className:'g2'},
+                  [{l:'Type',v:p.type},{l:'Zone',v:p.zone},{l:'Floor',v:`Floor ${p.floor}`},{l:'Size',v:`${p.sqm} sqm`}].map(d=>
+                    h('div',{key:d.l,style:{background:'var(--card)',borderRadius:5,padding:'6px 8px'}},
+                      h('div',{style:{fontSize:10,color:'var(--tx3)'}},d.l),
+                      h('div',{style:{fontSize:12,fontWeight:600}},d.v)
+                    )
+                  )
+                )
+              ),
+              p.status==='Available'&&h('button',{className:'btn btn-nav',style:{marginBottom:8}},
+                '📞 Register Buyer Interest'),
+              p.status!=='Under Construction'&&h('div',{
+                style:{background:'linear-gradient(135deg,var(--nav) 0%,#2D4A6E 100%)',
+                  borderRadius:8,padding:'14px',textAlign:'center',cursor:'pointer'}},
+                h('div',{style:{fontSize:20,marginBottom:6}},'🎬'),
+                h('div',{style:{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}},
+                  '3D Virtual Tour'),
+                h('div',{style:{fontSize:11,color:'rgba(255,255,255,.5)'}},
+                  'Interactive floor plan walkthrough — coming in V2')
+              )
+            )
+          )
+        );
+      })
+    ),
+
+    // ── PIPELINE ───────────────────────────────────────────────────────────
+    tab==='pipeline'&&h('div',{className:'pg'},
+      h('div',{className:'sec'},'Active Leads'),
+      LEADS.map(l=>
+        h('div',{key:l.id,className:'card',style:{padding:'12px 14px',marginBottom:8}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}},
+            h('div',{style:{flex:1}},
+              h('div',{style:{display:'flex',gap:6,marginBottom:4}},
+                h('span',{className:
+                  l.stage==='Negotiation'?'badge badge-g':
+                  l.stage==='Viewing Scheduled'?'badge badge-amb':
+                  'badge badge-sky'},l.stage)
+              ),
+              h('div',{style:{fontSize:13,fontWeight:600,marginBottom:2}},l.name),
+              h('div',{style:{fontSize:11,color:'var(--tx2)',marginBottom:2}},
+                l.interest+' · '+l.budget),
+              h('div',{style:{fontSize:11,color:'var(--tx3)'}},l.note)
+            ),
+            h('div',{style:{textAlign:'right',flexShrink:0,marginLeft:8}},
+              h('div',{style:{fontSize:11,color:'var(--tx3)'}},l.date),
+              h('div',{style:{fontSize:11,fontWeight:600,color:'var(--g)',marginTop:4}},l.phone)
+            )
+          )
+        )
+      ),
+      h('div',{className:'card',style:{padding:'14px',marginTop:4,background:'var(--navl)',border:'1px solid var(--bdr)'}},
+        h('div',{style:{fontSize:11,fontWeight:700,color:'var(--nav)',marginBottom:4}},'Pipeline Summary'),
+        [{s:'First Contact',n:LEADS.filter(l=>l.stage==='First Contact').length},
+         {s:'Viewing Scheduled',n:LEADS.filter(l=>l.stage==='Viewing Scheduled').length},
+         {s:'Negotiation',n:LEADS.filter(l=>l.stage==='Negotiation').length}].map(r=>
+          h('div',{key:r.s,style:{display:'flex',justifyContent:'space-between',
+            padding:'6px 0',borderBottom:'1px solid var(--bdr)'}},
+            h('span',{style:{fontSize:12,color:'var(--tx2)'}},r.s),
+            h('span',{style:{fontSize:12,fontWeight:700,color:'var(--nav)'}},r.n+' lead'+(r.n!==1?'s':''))
+          )
+        )
+      )
+    ),
+
+    // ── BUYERS / PAYMENT PLANS ──────────────────────────────────────────
+    tab==='buyers'&&h('div',{className:'pg'},
+      PAY_PLANS.map(pp=>{
+        const client=clientOf(pp.clientId);
+        const prop=propOf(pp.propId);
+        const paid=pp.items.filter(i=>i.paid).reduce((s,i)=>s+i.amount,0);
+        const balance=pp.total-paid;
+        const paidPct=Math.round(paid/pp.total*100);
+        const isExp=expandedPP===pp.id;
+        return h('div',{key:pp.id,className:'card',style:{marginBottom:12}},
+          h('div',{style:{padding:'14px',cursor:'pointer'},onClick:()=>setExpandedPP(isExp?null:pp.id)},
+            h('div',{style:{display:'flex',gap:6,marginBottom:8}},
+              h('span',{className:'badge badge-pur'},pp.type),
+              h('span',{className:'badge badge-nav'},prop?.zone||'')
+            ),
+            h('div',{style:{fontSize:14,fontWeight:700,marginBottom:2}},client?.name),
+            h('div',{style:{fontSize:12,color:'var(--tx2)',marginBottom:8}},
+              prop?`${prop.estate} · ${prop.unit}`:''),
+            h('div',{className:'g2',style:{marginBottom:10}},
+              h('div',null,
+                h('div',{style:{fontSize:10,color:'var(--tx3)'}},  'Total Price'),
+                h('div',{style:{fontSize:14,fontWeight:700,color:'var(--nav)'}},
+                  '₦'+fmtM(pp.total))
+              ),
+              h('div',null,
+                h('div',{style:{fontSize:10,color:'var(--tx3)'}},  'Outstanding'),
+                h('div',{style:{fontSize:14,fontWeight:700,color:balance>0?'var(--amb)':'var(--g)'}},
+                  '₦'+fmtM(balance))
+              )
+            ),
+            h('div',{style:{height:6,background:'var(--bdr)',borderRadius:3,overflow:'hidden',marginBottom:6}},
+              h('div',{style:{height:'100%',width:paidPct+'%',background:'var(--g)',borderRadius:3}})
+            ),
+            h('div',{style:{display:'flex',justifyContent:'space-between'}},
+              h('span',{style:{fontSize:11,color:'var(--tx2)'}},paidPct+'% paid'),
+              h('span',{style:{fontSize:11,color:'var(--tx3)'}},isExp?'▲ Close':'▼ View plan')
+            )
+          ),
+          isExp&&h('div',{style:{borderTop:'1px solid var(--bdr)',padding:'12px 14px'}},
+            h('div',{className:'sec'},'Payment Schedule'),
+            pp.items.map((item,i)=>
+              h('div',{key:i,style:{display:'flex',justifyContent:'space-between',alignItems:'center',
+                padding:'8px 10px',borderRadius:6,marginBottom:6,
+                background:item.paid?'var(--gl)':item.due&&item.due<today()?'var(--redl)':'var(--bg)',
+                border:`1px solid ${item.paid?'var(--g3)':item.due&&item.due<today()?'var(--redl)':'var(--bdr)'}`}},
+                h('div',null,
+                  h('div',{style:{fontSize:12,fontWeight:600,color:item.paid?'var(--g2)':'var(--tx)'}},
+                    item.label),
+                  h('div',{style:{fontSize:11,color:'var(--tx3)'}},
+                    item.paid?'Paid: '+item.date:'Due: '+item.due)
+                ),
+                h('div',{style:{textAlign:'right'}},
+                  h('div',{style:{fontSize:13,fontWeight:700,
+                    color:item.paid?'var(--g)':'var(--tx)'}},
+                    '₦'+fmtM(item.amount)),
+                  h('span',{className:'badge '+(item.paid?'badge-g':'badge-amb')},
+                    item.paid?'✓ Paid':'Pending')
+                )
+              )
+            )
+          )
+        );
+      })
+    ),
+
+    // ── PRICING / SELL OR SHELVE ────────────────────────────────────────
+    tab==='pricing'&&h('div',{className:'pg'},
+      h('div',{className:'card',style:{padding:'14px',marginBottom:12,
+        background:'var(--navl)',border:'1px solid var(--bdr)'}},
+        h('div',{style:{fontSize:12,fontWeight:700,color:'var(--nav)',marginBottom:4}},
+          '💰 Sell vs Shelve Price Calculator'),
+        h('div',{style:{fontSize:11,color:'var(--tx2)',lineHeight:1.7}},
+          'Every completed unit\'s construction cost (from FieldLedger) + a 10-year service charge reserve '+
+          'determines the minimum sell price. Margin above this is your gross profit per unit. '+
+          'Units below 25% margin should be reviewed for repricing or shelving.')
+      ),
+      PROPERTIES.filter(p=>p.buildCost&&p.listPrice).map(p=>{
+        const m=calcMargin(p);
+        if(!m)return null;
+        return h('div',{key:p.id,className:'card',style:{padding:'12px 14px',marginBottom:8}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}},
+            h('div',null,
+              h('div',{style:{fontSize:13,fontWeight:700,marginBottom:2}},
+                p.estate+' · '+p.unit),
+              h('div',{style:{fontSize:11,color:'var(--tx2)'}},p.type+' · '+p.zone)
+            ),
+            h('div',{style:{textAlign:'right'}},
+              h('div',{style:{fontSize:16,fontWeight:800,
+                color:m.marginPct>=50?'var(--g)':m.marginPct>=25?'var(--amb)':'var(--red)'}},
+                '+'+m.marginPct+'%'),
+              h('div',{style:{fontSize:10,color:'var(--tx3)'}},
+                m.marginPct>=50?'Strong — Sell':m.marginPct>=25?'Acceptable':'Review Pricing')
+            )
+          ),
+          h('div',{className:'g3',style:{gap:6}},
+            [{l:'Build Cost',v:'₦'+fmtM(p.buildCost),c:'var(--tx)'},
+             {l:'SC Reserve (10yr)',v:'₦'+fmtM(p.sc*10),c:'var(--amb)'},
+             {l:'List Price',v:'₦'+fmtM(p.listPrice),c:'var(--nav)'}].map(d=>
+              h('div',{key:d.l,style:{background:'var(--bg)',borderRadius:5,padding:'6px 8px'}},
+                h('div',{style:{fontSize:10,color:'var(--tx3)'}},d.l),
+                h('div',{style:{fontSize:12,fontWeight:700,color:d.c}},d.v)
+              )
+            )
+          ),
+          h('div',{style:{marginTop:8,padding:'7px 10px',borderRadius:5,
+            background:m.marginPct>=50?'var(--gl)':m.marginPct>=25?'var(--ambl)':'var(--redl)'}},
+            h('div',{style:{display:'flex',justifyContent:'space-between'}},
+              h('span',{style:{fontSize:11,color:'var(--tx2)'}},
+                'Gross profit after build + 10yr facility reserve'),
+              h('span',{style:{fontSize:12,fontWeight:700,
+                color:m.marginPct>=50?'var(--g)':m.marginPct>=25?'var(--amb)':'var(--red)'}},
+                '₦'+fmtM(m.margin))
+            )
+          )
+        );
+      })
+    )
+  );
+}
+
+// ── MANAGEMENT DASHBOARD ─────────────────────────────────────────────────
+function ManagementDashboard({onBack}){
+  const scCollected=SC_INVOICES.filter(i=>i.status==='Paid').reduce((s,i)=>s+i.amt,0);
+  const scTotal=SC_INVOICES.reduce((s,i)=>s+i.amt,0);
+  const scRate=Math.round(scCollected/scTotal*100);
+  const openJobs=JOBS.filter(j=>j.status!=='Completed').length;
+  const urgentJobs=JOBS.filter(j=>j.priority==='Emergency'||j.priority==='Urgent').filter(j=>j.status!=='Completed').length;
+  const availableProps=PROPERTIES.filter(p=>p.status==='Available').length;
+  const activeLeads=LEADS.length;
+  const totalBuildCost=PROPERTIES.filter(p=>p.buildCost).reduce((s,p)=>s+p.buildCost,0);
+
+  return h('div',{style:{background:'var(--bg)',minHeight:'100vh'}},
+    h('div',{style:{background:'linear-gradient(135deg,var(--nav) 0%,var(--nav2) 100%)',padding:'20px 16px 16px'}},
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}},
+        h('div',null,
+          h('div',{style:{fontSize:16,fontWeight:700,color:'#fff'}},'📊 Management Dashboard'),
+          h('div',{style:{fontSize:11,color:'rgba(255,255,255,.5)'}},today()+' · COO / MD View')
+        ),
+        h('button',{style:{background:'rgba(255,255,255,.15)',color:'#fff',padding:'5px 12px',
+          borderRadius:20,fontSize:11,fontWeight:600,cursor:'pointer',border:'none'},onClick:onBack},'← Back')
+      )
+    ),
+    h('div',{className:'pg'},
+      h('div',{className:'sec'},'Construction — FieldLedger'),
+      h('div',{className:'stat-row'},
+        [{l:'Active Sites',v:'24'},{l:'Portfolio Spend',v:'₦226M+'},{l:'Week 4 Jun',v:'₦48.2M'}].map(s=>
+          h('div',{key:s.l,className:'stat'},
+            h('div',{className:'stat-n',style:{fontSize:16}},s.v),
+            h('div',{className:'stat-l'},s.l)
+          )
+        )
+      ),
+      h('div',{className:'card',style:{padding:'10px 14px',marginBottom:16,background:'var(--ambl)',border:'1px solid var(--ambl)'}},
+        h('div',{style:{fontSize:11,fontWeight:700,color:'var(--amb)',marginBottom:2}},'Sites under regulatory suspension'),
+        h('div',{style:{fontSize:11,color:'var(--tx2)'}},
+          'Tanzanite · Aquamarine · Alexandrite — pending clearance')
+      ),
+
+      h('div',{className:'sec'},'Facility Management'),
+      h('div',{className:'g2',style:{gap:8,marginBottom:10}},
+        h('div',{className:'stat'},
+          h('div',{className:'stat-n'},openJobs),
+          h('div',{className:'stat-l'},'Open Jobs'),
+          urgentJobs>0&&h('div',{className:'badge badge-red',style:{marginTop:6}},
+            urgentJobs+' urgent/emergency')
+        ),
+        h('div',{className:'stat'},
+          h('div',{className:'stat-n'},scRate+'%'),
+          h('div',{className:'stat-l'},'SC Collected'),
+          h('div',{className:'bar-t'},
+            h('div',{className:'bar-f',style:{width:scRate+'%',background:'var(--g)'}})
+          )
+        )
+      ),
+      h('div',{className:'g2',style:{gap:8,marginBottom:16}},
+        h('div',{className:'stat'},
+          h('div',{className:'stat-n'},'₦'+fmtM(scCollected)),
+          h('div',{className:'stat-l'},'SC Received')
+        ),
+        h('div',{className:'stat'},
+          h('div',{className:'stat-n',style:{color:'var(--red)'}},
+            '₦'+fmtM(scTotal-scCollected)),
+          h('div',{className:'stat-l'},'SC Outstanding')
+        )
+      ),
+
+      h('div',{className:'sec'},'Sales Pipeline'),
+      h('div',{className:'g2',style:{gap:8,marginBottom:10}},
+        h('div',{className:'stat'},
+          h('div',{className:'stat-n'},availableProps),
+          h('div',{className:'stat-l'},'Available Units')
+        ),
+        h('div',{className:'stat'},
+          h('div',{className:'stat-n'},activeLeads),
+          h('div',{className:'stat-l'},'Active Leads')
+        )
+      ),
+      h('div',{className:'g2',style:{gap:8,marginBottom:16}},
+        h('div',{className:'stat'},
+          h('div',{className:'stat-n'},'₦'+fmtM(PROPERTIES.filter(p=>p.status==='Available').reduce((s,p)=>s+p.listPrice,0))},
+          h('div',{className:'stat-l'},'Available Value')
+        ),
+        h('div',{className:'stat'},
+          h('div',{className:'stat-n'},'₦'+fmtM(PAY_PLANS.reduce((s,pp)=>s+pp.items.filter(i=>!i.paid).reduce((ss,i)=>ss+i.amount,0),0))},
+          h('div',{className:'stat-l'},'Payments Due')
+        )
+      ),
+
+      h('div',{className:'sec'},'Platform'),
+      h('div',{className:'card',style:{padding:'14px',background:'var(--gl)',border:'1px solid var(--g)'}},
+        h('div',{style:{fontSize:11,fontWeight:700,color:'var(--g2)',marginBottom:8}},
+          'PFTC Platform Retainer · ₦200,000 / month'),
+        [{l:'FieldLedger',s:'Wage bills + cost tracking',st:'Live — Onboarding supervisors'},
+         {l:'Facility Management',s:'Maintenance + service charges',st:'Demo — Pending go-live'},
+         {l:'Sales Module',s:'Listings + buyer pipeline',st:'Demo — Pending go-live'},
+         {l:'Management Dashboard',s:'Cross-module executive view',st:'This screen'}].map(m=>
+          h('div',{key:m.l,style:{display:'flex',justifyContent:'space-between',alignItems:'center',
+            padding:'7px 0',borderBottom:'1px solid rgba(31,110,67,.15)'}},
+            h('div',null,
+              h('div',{style:{fontSize:12,fontWeight:600,color:'var(--nav)'}},m.l),
+              h('div',{style:{fontSize:11,color:'var(--tx2)'}},m.s)
+            ),
+            h('span',{className:'badge '+(m.st.includes('Live')?'badge-g':m.st.includes('Demo')?'badge-amb':'badge-sky')},
+              m.st)
+          )
+        )
+      )
+    )
+  );
+}
+
+// ── FIELDLEDGER CONSTRUCTION (simplified demo stub) ───────────────────────
+function ConstructionModule({onBack}){
+  return h('div',{style:{background:'var(--bg)',minHeight:'100vh'}},
+    h('div',{style:{background:'linear-gradient(135deg,var(--amb) 0%,#92400E 100%)',padding:'20px 16px'}},
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+        h('div',null,
+          h('div',{style:{fontSize:16,fontWeight:700,color:'#fff'}},'🏗 FieldLedger'),
+          h('div',{style:{fontSize:11,color:'rgba(255,255,255,.6)'}},
+            'Construction Cost Intelligence — 24 Active Sites')
+        ),
+        h('button',{style:{background:'rgba(255,255,255,.15)',color:'#fff',padding:'5px 12px',
+          borderRadius:20,fontSize:11,fontWeight:600,cursor:'pointer',border:'none'},onClick:onBack},'← Back')
+      )
+    ),
+    h('div',{className:'pg'},
+      h('div',{className:'stat-row'},
+        [{l:'Portfolio May',v:'₦152M'},{l:'June W1-W4',v:'₦74M'},{l:'Cumulative',v:'₦226M+'}].map(s=>
+          h('div',{key:s.l,className:'stat'},
+            h('div',{className:'stat-n',style:{fontSize:16,color:'var(--amb)'}},s.v),
+            h('div',{className:'stat-l'},s.l)
+          )
+        )
+      ),
+      h('div',{className:'card',style:{padding:'14px',marginBottom:12,
+        background:'var(--ambl)',border:'1px solid var(--amb)'}},
+        h('div',{style:{fontSize:12,fontWeight:700,color:'var(--amb)',marginBottom:6}},
+          'Full FieldLedger v1.0 — Running in Separate Module'),
+        h('div',{style:{fontSize:11,color:'var(--tx2)',lineHeight:1.7,marginBottom:10}},
+          'The complete FieldLedger system (FieldLedger_v1.0.html) handles all wage bill entry, '+
+          'QS cost tracking, Head QS review queue, Transfer Register, and Google Sheets sync. '+
+          'It is being loaded separately for supervisor onboarding this week.'),
+        h('div',{className:'sec'},'This Week — Onboarding Roadmap'),
+        [{step:'1',done:true,label:'FieldLedger v1.0 delivered and validated'},
+         {step:'2',done:true,label:'Google Apps Script deployed to Sunville Sheets'},
+         {step:'3',done:false,label:'Supervisor PINs configured for all 24 sites'},
+         {step:'4',done:false,label:'Supervisor training and first live submissions'},
+         {step:'5',done:false,label:'First week confirmed entries → tracker updated'},
+         {step:'6',done:false,label:'Phase 0 sign-off → Invoice #1 submitted'},
+        ].map(r=>h('div',{key:r.step,style:{display:'flex',alignItems:'center',gap:10,
+          padding:'7px 0',borderBottom:'1px solid rgba(180,83,9,.15)'}},
+          h('div',{style:{width:24,height:24,borderRadius:'50%',flexShrink:0,
+            display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,
+            background:r.done?'var(--g)':'var(--bdr)',color:r.done?'#fff':'var(--tx2)'}},
+            r.done?'✓':r.step),
+          h('div',{style:{fontSize:12,color:r.done?'var(--g2)':'var(--tx)'}},r.label)
+        ))
+      ),
+      h('div',{className:'sec'},'Active Sites — Zone Summary'),
+      h('div',{className:'g2',style:{gap:8}},
+        [{zone:'Zone A — Odili Road',sites:['Black Opal','Jade 1','Jade 2','Coral','Amber','Amethyst','Prime Courts 1-4'],count:12},
+         {zone:'Zone B — GRA',sites:['Alexandrite','Aquamarine','Tanzanite','Moonstone','Sunstone','Citrine','Garnet Heights'],count:12}
+        ].map(z=>h('div',{key:z.zone,className:'card',style:{padding:'12px'}},
+          h('div',{style:{fontSize:12,fontWeight:700,color:'var(--nav)',marginBottom:6}},z.zone),
+          h('div',{style:{fontSize:11,color:'var(--tx2)',marginBottom:6}},z.count+' active sites'),
+          z.sites.map(s=>h('span',{key:s,style:{display:'inline-block',fontSize:10,
+            background:'var(--bg)',borderRadius:4,padding:'2px 6px',marginRight:4,marginBottom:4,
+            color:'var(--tx2)',border:'1px solid var(--bdr)'}},s))
+        ))
+      )
+    )
+  );
+}
+
+// ── APP ROOT ──────────────────────────────────────────────────────────────
+function App(){
+  const [screen,setScreen]=useState('landing');
+  return h('div',{style:{maxWidth:480,margin:'0 auto'}},
+    screen==='landing'&&h(PlatformLanding,{onModule:setScreen}),
+    screen==='facility'&&h(FacilityModule,{onBack:()=>setScreen('landing')}),
+    screen==='sales'&&h(SalesModule,{onBack:()=>setScreen('landing')}),
+    screen==='construction'&&h(ConstructionModule,{onBack:()=>setScreen('landing')}),
+    screen==='dashboard'&&h(ManagementDashboard,{onBack:()=>setScreen('landing')})
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>
